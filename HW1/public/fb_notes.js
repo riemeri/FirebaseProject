@@ -10,6 +10,7 @@ signIn.addEventListener('click', (ev) => {
 			window.location.href = "details.html";
 		}).catch(function(error) {
 			//Handling the error showcasing.
+			alert(error.message);
 			console.log(error);
 		});
 }, false);
@@ -30,7 +31,7 @@ signUp.addEventListener('click', (ev) => {
 		if (errorCode == 'auth/weak-password') {
 			alert('The password is too weak.');
 		} else {
-			alert(email + 'failed');
+			alert(errorMessage);
 		}
 		console.log(error);
 	});

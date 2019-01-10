@@ -18,10 +18,18 @@
 
 .body-content {
   border-radius: 2px;
-  padding: 80px 56px;
+  padding: 60px 56px;
   margin-bottom: 80px;
 }
 
 .body-layout {
 	padding: 40px 28px;
+}
+
+.form-button-left {
+	margin-right: 20px;
+}
+
+.button-box {
+	margin-top: 10px;
 }
