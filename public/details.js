@@ -1,9 +1,12 @@
+//JS file details page after login
+
 var user = firebase.auth().currentUser;
 var name, email, photoUrl, uid, emailVerified;
 
 let nameDisplay = document.getElementById('name-display');
 let emailDisplay = document.getElementById('email-display');
 
+//On change of auth state, get user info or return home if no one is logged in
 firebase.auth().onAuthStateChanged(function(user) {
 	if (user) {
 		// User is signed in.
@@ -22,6 +25,7 @@ firebase.auth().onAuthStateChanged(function(user) {
 	}
 });
 
+//Logout user (which triggers an auth state change, returning the user to the login page
 let logoutBtn = document.getElementById('logout');
 logoutBtn.addEventListener('click', (ev) => { 
 	firebase.auth().signOut().then(() => {

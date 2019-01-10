@@ -1,3 +1,5 @@
+//Main JS page for index.html/login page
+
 //Getting the Email/Password and Signin button from the inputs above.
 let signIn = document.getElementById('login');
 
@@ -15,6 +17,7 @@ signIn.addEventListener('click', (ev) => {
 		});
 }, false);
 
+//Assigns sign-up functionality to the Sign Up button
 let signUp = document.getElementById('signup');
 signUp.addEventListener('click', (ev) => {
 	let email = document.getElementById('email').value;
@@ -22,6 +25,7 @@ signUp.addEventListener('click', (ev) => {
 	firebase.auth().createUserWithEmailAndPassword(email, password).then(function(result) {
 		console.log(result);
 		var user = result.user;
+		//Extract name from email and assign to the user
 		var idx = email.indexOf('@');
 		var name = email.slice(0, idx);
 		user.updateProfile({
@@ -47,6 +51,7 @@ signUp.addEventListener('click', (ev) => {
 });
 
 
+//Opens pop-up for google login
 let googleLogin = document.getElementById('googleLogin');
 googleLogin.addEventListener('click', () => {
 	//TODO: Handle Google auth here.
