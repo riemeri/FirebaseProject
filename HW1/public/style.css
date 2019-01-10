@@ -1,0 +1,27 @@
+.body-main {
+	margin-top: -35vh;
+	flex-shrink: 0;
+}
+
+.body-container {
+	max-width: 1600px;
+	width: calc(100% - 16px);
+	margin: 0 auto;
+}
+
+.body-ribbon {
+  width: 100%;
+  height: 40vh;
+  background-color: #3F51B5;
+  flex-shrink: 0;
+}
+
+.body-content {
+  border-radius: 2px;
+  padding: 80px 56px;
+  margin-bottom: 80px;
+}
+
+.body-layout {
+	padding: 40px 28px;
+}
