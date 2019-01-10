@@ -22,7 +22,16 @@ signUp.addEventListener('click', (ev) => {
 	firebase.auth().createUserWithEmailAndPassword(email, password).then(function(result) {
 		console.log(result);
 		var user = result.user;
-		alert(email + ' signed in');
+		var idx = email.indexOf('@');
+		var name = email.slice(0, idx);
+		user.updateProfile({
+			displayName: name,
+			photoURL: ""
+		}).then(function() {
+			//
+		}).catch(function(error) {
+			alert("Error updating name");
+		});
 		window.location.href = "details.html";
 	}).catch(function(error) {
 		//Hande errors here

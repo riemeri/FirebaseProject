@@ -14,7 +14,9 @@
   
 	<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header mdl-color--grey-100 is-upgraded is-small-screen">
 		<header class="mdl-layout__header">
-			<div class="mdl-layout-icon"></div>
+			<div class="mdl-layout__drawer-button" role="button">
+				<i class="material-icons">menu</i>
+			</div>
 			<div class="mdl-layout__header-row">
 				<span class="mdl-layout__title">Firebase Notes</span>
 				<div class="mdl-layout-spacer"></div>
@@ -30,13 +32,14 @@
 				<div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
 				<div class="body-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
 					<h3>User Details</h3>
+					<p id="name-display">Display Name: </p>
+					<p id="email-display">Email: </p>
 				</div>
 			</div>
 			
 		</main>
 	</div>
-  
-	<script src="details.js"></script>
+
 	
 	<script src="https://www.gstatic.com/firebasejs/5.7.2/firebase.js"></script>
 	<script>
@@ -52,6 +55,7 @@
 	  firebase.initializeApp(config);
 	</script>
 	
+	<script src="details.js"></script>
 	
 	<!-- Load React. -->
 	<!-- Note: when deploying, replace "development.js" with "production.min.js". -->

@@ -14,7 +14,9 @@
   
 	<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header mdl-color--grey-100 is-upgraded is-small-screen">
 		<header class="mdl-layout__header">
-			<div class="mdl-layout-icon"></div>
+			<div class="mdl-layout__drawer-button" role="button">
+				<i class="material-icons">menu</i>
+			</div>
 			<div class="mdl-layout__header-row">
 				<span class="mdl-layout__title">Firebase Notes</span>
 				<div class="mdl-layout-spacer"></div>
@@ -26,9 +28,9 @@
 			<div class="body-container mdl-grid">
 				<div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
 				<div class="body-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
-					<h3>Sign in to Firebase Notes</h3>
+					<h3 class="login-banner">Sign in to Firebase Notes</h3>
 					
-					<form>
+					<form class="form-login">
 						<div class="mdl-textfield mdl-js-textfield">
 							<label class="mdl-textfield__label" for="email">Email address</label>
 							<input type="email" class="mdl-textfield__input" id="email">
@@ -38,12 +40,12 @@
 							<input type="password" class="mdl-textfield__input" id="password">
 						</div>
 						<br>
-						<div class="button-box">
+						<div class="button-box login-area">
 							<button id="signup" type="button" class="form-button-left mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">Sign Up</button>
 							<button id="login" type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">Sign in</button>
 						</div>
 					</form><br><br>
-					<button id="googleLogin" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Sign in with Google</button>
+					<button id="googleLogin" class="login-area mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Sign in with Google</button>
 				</div>
 			</div>
 			
