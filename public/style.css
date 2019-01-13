@@ -20,6 +20,22 @@
 	border-radius: 2px;
 	padding: 60px 56px;
 	margin-bottom: 80px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.list-box {
+	border-radius: 2px;
+	padding: 30px 40px;
+	margin-bottom: 80px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+#add-button {
+	position: absolute;
+    top: 23px;
+    right: 47px;
 }
 
 .body-layout {
