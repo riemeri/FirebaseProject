@@ -56,16 +56,15 @@ addButton.addEventListener('click', (ev) => {
 		updated: '01-12-2019'
 	}).key;
 	
+	showNote(newKey);
 	/*var noteData = {
 		title: 'New note',
 		content: 'Write notes here',
 		created: '01-12-2019',
 		updated: '01-12-2019'
 	};
-
 	var updates = {};
 	updates['/notes/' + uid + '/' + newKey] = noteData;
-
 	db.ref().update(updates);
 	*/
 });
@@ -74,7 +73,7 @@ function checkTable(id) {
 	var notesRef = db.ref('/notes/' + id);
 	notesRef.on('value', (snapshot) => {
 		updateTable(snapshot);
-		alert('table updated');
+		//alert('table updated');
 	});
 }
 
@@ -82,11 +81,18 @@ function updateTable(snapshot) {
 	var notes = snapshot.val();
 	console.log(notes);
 	notesBody.innerHTML = '';
-	snapshot.forEach(function (element){
+	var key;
+	var fst = 0;
+	snapshot.forEach(function (notes){
 		//console.log(element.key);
-		var len = element.val().content.length;
-		addTableEntry(element.val().title, len, element.key);
+		if (fst == 0) {
+			key = notes.key;
+			fst = 1;
+		}
+		var len = notes.val().content.length;
+		addTableEntry(notes.val().title, len, notes.key);
 	});
+	showNote(key);
 }
 
 function addTableEntry(title, length, key) {
@@ -97,21 +103,58 @@ function addTableEntry(title, length, key) {
 	var cell3 = row.insertCell(2);
 	cell1.className = "mdl-data-table__cell--non-numeric";
 	cell1.innerHTML = title;
+	row.addEventListener('click', (ev) => {
+		showNote(key);
+	});
 
 	cell2.innerHTML = length;
-	//cell3.innerHTML = '<a class="mdl-list__item-secondary-action" href="#"><i class="material-icons">list</i></a>';
+	cell3.innerHTML = '<a class="mdl-list__item-secondary-action" href="#"><i class="material-icons">list</i></a>';
 	//Add button which activates the function 'showNote(noteKey)'
-	var myhtml = '<button class="mdl-button mdl-js-button" onclick="showNote(';
+	/*var myhtml = '<button class="mdl-button mdl-js-button" onclick="showNote(';
 	myhtml += "'";
 	myhtml += key;
 	myhtml += "'";
 	myhtml += ')"><i class="material-icons">list</i></button>';
-	cell3.innerHTML = myhtml;
+	cell3.innerHTML = myhtml;*/
 }
 
 function showNote(noteKey) {
 	db.ref('notes/' + uid + '/' + noteKey).once('value').then(function(snapshot) {
-		document.getElementById('note-title').innerHTML = snapshot.val().title;
-		document.getElementById('note-content').innerHTML = snapshot.val().content;
+		noteDisplay = document.getElementById('note-display');
+		var htmlText = '<form class="">';
+		htmlText += '	<div class="edit-note-title mdl-textfield mdl-js-textfield mdl-textfield--floating-label">';
+		htmlText += '		<label for="title-input">Title</label>';
+		htmlText += '		<input type="text" class="mdl-textfield__input" id="title-input" value="' + snapshot.val().title + '">';
+		htmlText += '	</div><br>';
+		htmlText += '	<div class="edit-content mdl-textfield mdl-js-textfield">';
+		htmlText += '		<textarea type="text" rows="10" class="mdl-textfield__input" id="text-input">';
+		htmlText += snapshot.val().content;
+		htmlText += '</textarea></div></form>';
+		noteDisplay.innerHTML = htmlText;
+		
+		var btn = document.createElement("BUTTON");
+		btn.appendChild(document.createTextNode("Save"));
+		btn.className = "mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent";
+		btn.id = "save-button";
+		noteDisplay.appendChild(btn);
+		saveButton(noteKey);
+		//document.getElementById('note-title').innerHTML = snapshot.val().title;
+		//document.getElementById('note-content').innerHTML = snapshot.val().content;
+	});
+}
+
+function saveButton(noteKey) {
+	let saveButton = document.getElementById('save-button');
+	saveButton.addEventListener('click', (ev) => {
+		//alert("Save button clicked");
+		var noteData = {
+			title: document.getElementById('title-input').value,
+			content: document.getElementById('text-input').value,
+			created: '01-12-2019',
+			updated: '01-12-2019'
+		};
+		var updates = {};
+		updates['/notes/' + uid + '/' + noteKey] = noteData;
+		db.ref().update(updates);
 	});
 }

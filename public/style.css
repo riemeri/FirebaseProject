@@ -18,15 +18,15 @@
 
 .body-content {
 	border-radius: 2px;
-	padding: 60px 56px;
-	margin-bottom: 80px;
-	margin-left: auto;
-	margin-right: auto;
+    padding: 2px 56px 30px;
+    margin-bottom: 80px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .list-box {
 	border-radius: 2px;
-	padding: 30px 40px;
+	padding: 30px 36px;
 	margin-bottom: 80px;
 	margin-left: auto;
 	margin-right: auto;
@@ -36,6 +36,12 @@
 	position: absolute;
     top: 23px;
     right: 47px;
+}
+
+#save-button {
+	width: 150px;
+    margin-left: auto;
+    margin-right: 10px;
 }
 
 .body-layout {
@@ -67,3 +73,24 @@
 	text-align: center;
 }
 
+.edit-note-title {
+	margin-left: 0;
+	margin-right: auto;
+	width: 400px;
+    max-width: -webkit-fill-available;
+}
+
+.edit-content {
+	width: -webkit-fill-available;
+    max-width: -webkit-fill-available;
+    margin-left: 0;
+    margin-right: auto;
+}
+
+#title-input {
+	font-size:32px;
+	margin-left: 0;
+    margin-right: auto;
+    width: 400px;
+    max-width: -webkit-fill-available;
+}
