@@ -4,10 +4,14 @@
     <meta charset="UTF-8">
     <title>Notes</title>
 	
-	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-	<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.blue_grey-indigo.min.css" />
-	<link rel="stylesheet" href="style.css">
-	<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+		<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.blue_grey-indigo.min.css" />
+		<link rel="stylesheet" href="style.css">
+		<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+		<!-- Load React. -->
+		<!-- Note: when deploying, replace "development.js" with "production.min.js". -->
+		<script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+		<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   <body>
@@ -29,17 +33,43 @@
 		<div class="body-ribbon"></div>
 		<main class="body-main mdl-layout__content">
 			<div class="body-container mdl-grid">
-				<div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
-				<div class="body-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
-					<h3>User Details</h3>
-					<p id="name-display">Display Name: </p>
-					<p id="email-display">Email: </p>
+				<div class="list-box mdl-card mdl-cell mdl-cell--4-col mdl-color--white mdl-shadow--4dp mdl-color-text--grey-800">
+					<div class="mdl-card__title">
+						<h3 class="mdl-card__title-text">Notes List</h3>
+					</div>
+					<button id="add-button" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored">
+							<i class="material-icons">add</i>
+					</button>
+					<table id="notes-table" class="mdl-data-table mdl-js-data-table">
+						<thead>
+							<tr>
+								<th class="mdl-data-table__cell--non-numeric">Title</th>
+								<th>Date Added</th>
+								<!--<th>Edit</th>-->
+							</tr>
+						</thead>
+						<tbody id="notes-body">
+						</tbody>
+					</table>
+				</div>
+				<div id="note-display" class="body-content mdl-card mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
+					<div id="note-form"></div>
+					<button id="delete-button" type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">
+						Delete
+					</button>
+					<button id="save-button" type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+						Save
+					</button>
 				</div>
 			</div>
 			
 		</main>
 	</div>
 
+	<div id="note-snackbar" class="mdl-snackbar mdl-js-snackbar">
+			<div class="mdl-snackbar__text"></div>
+			<button type="button" class="mdl-snackbar__action"></button>
+	</div>
 	
 	<script src="https://www.gstatic.com/firebasejs/5.7.2/firebase.js"></script>
 	<script>
@@ -55,11 +85,6 @@
 	  firebase.initializeApp(config);
 	</script>
 	
-	<script src="details.js"></script>
-	
-	<!-- Load React. -->
-	<!-- Note: when deploying, replace "development.js" with "production.min.js". -->
-	<script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
-	<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+	<script src="details-react.js"></script>
   </body>
 </html>
