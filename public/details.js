@@ -100,7 +100,7 @@ function addTableEntry(title, length, key) {
 	row = notesBody.insertRow(rows);
 	var cell1 = row.insertCell(0);
 	var cell2 = row.insertCell(1);
-	var cell3 = row.insertCell(2);
+	//var cell3 = row.insertCell(2);
 	cell1.className = "mdl-data-table__cell--non-numeric";
 	cell1.innerHTML = title;
 	row.addEventListener('click', (ev) => {
@@ -108,7 +108,7 @@ function addTableEntry(title, length, key) {
 	});
 
 	cell2.innerHTML = length;
-	cell3.innerHTML = '<a class="mdl-list__item-secondary-action" href="#"><i class="material-icons">list</i></a>';
+	//cell3.innerHTML = '<a class="mdl-list__item-secondary-action" href="#"><i class="material-icons">list</i></a>';
 	//Add button which activates the function 'showNote(noteKey)'
 	/*var myhtml = '<button class="mdl-button mdl-js-button" onclick="showNote(';
 	myhtml += "'";
@@ -156,5 +156,13 @@ function saveButton(noteKey) {
 		var updates = {};
 		updates['/notes/' + uid + '/' + noteKey] = noteData;
 		db.ref().update(updates);
+		snackbarToast('"' + noteData.title + '" saved.');
+	});
+}
+
+function snackbarToast(toast) {
+	var snackbar = document.getElementById('note-snackbar');
+	snackbar.MaterialSnackbar.showSnackbar({
+		message: toast
 	});
 }

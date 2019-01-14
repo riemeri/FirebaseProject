@@ -18,30 +18,40 @@
 
 .body-content {
 	border-radius: 2px;
-    padding: 2px 56px 30px;
+    padding: 8px 56px 30px;
     margin-bottom: 80px;
     margin-left: auto;
-    margin-right: auto;
+	margin-right: auto;
+	display: block;
 }
 
 .list-box {
 	border-radius: 2px;
-	padding: 30px 36px;
-	margin-bottom: 80px;
-	margin-left: auto;
-	margin-right: auto;
+    padding: 8px 36px 36px;
+    margin-bottom: 80px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 430px;
+    overflow: visible;
 }
 
 #add-button {
 	position: absolute;
-    top: 23px;
-    right: 47px;
+    bottom: -24px;
+    right: 11px;
 }
 
 #save-button {
 	width: 150px;
     margin-left: auto;
-    margin-right: 10px;
+	margin-right: 10px;
+	float: right;
+}
+
+#delete-button {
+	width: 150px;
+    margin-left: 10px;
+	margin-right: auto;
 }
 
 .body-layout {
@@ -87,8 +97,16 @@
     margin-right: auto;
 }
 
+.note-label {
+	top: 0px;
+}
+
+.title-label {
+	top: 7px;
+}
+
 #title-input {
-	font-size:32px;
+	font-size:30px;
 	margin-left: 0;
     margin-right: auto;
     width: 400px;
