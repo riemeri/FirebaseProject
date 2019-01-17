@@ -42,20 +42,33 @@
 }
 
 #save-button {
-	width: 150px;
+	width: 140px;
     margin-left: auto;
 	margin-right: 10px;
 	float: right;
 }
 
 #delete-button {
-	width: 150px;
-    margin-left: 10px;
+	width: 140px;
+    margin-left: auto;
 	margin-right: auto;
+	float: right;
+}
+
+#add-file-button {
+	cursor: pointer;
 }
 
 .body-layout {
 	padding: 40px 28px;
+}
+
+#file-display {
+	margin-top: 15px;
+}
+
+.file-image {
+	width: 100%;
 }
 
 .form-button-left {
@@ -95,6 +108,11 @@
     max-width: -webkit-fill-available;
     margin-left: 0;
     margin-right: auto;
+}
+
+.image-text {
+	padding: 2px;
+    margin: 10px;
 }
 
 .note-label {

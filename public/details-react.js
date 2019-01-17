@@ -2,8 +2,10 @@
 var user = firebase.auth().currentUser;
 var name, email, photoUrl, uid, emailVerified;
 var db = firebase.database();
+var storageRef = firebase.storage().ref();
+var imgElements = [];
 
-var currentKey = void 0;
+var currentKey = null;
 var createDate = void 0;
 var notesBody = document.getElementById('notes-body');
 var noteDisplay = document.getElementById('note-display');
@@ -46,7 +48,6 @@ logoutBtn.addEventListener('click', function (ev) {
 var addButton = document.getElementById('add-button');
 addButton.addEventListener('click', function (ev) {
 	var dateObj = new Date();
-	//var date = "" + dateObj.getMonth() + '-'
 
 	var newKey = db.ref().child('notes/' + uid).push({
 		title: 'New note',
@@ -56,6 +57,7 @@ addButton.addEventListener('click', function (ev) {
 	}).key;
 
 	showNote(newKey);
+	currentKey = newKey;
 });
 
 function checkTable(id) {
@@ -68,17 +70,16 @@ function checkTable(id) {
 
 function updateTable(snapshot) {
 	notesBody.innerHTML = '';
-	var key;
 	var fst = 0;
 	snapshot.forEach(function (notes) {
-		if (fst == 0) {
-			key = notes.key;
+		if (currentKey == null && fst == 0) {
+			currentKey = notes.key;
 			fst = 1;
 		}
 		//var len = notes.val().content.length;
 		addTableEntry(notes.val().title, notes.key, notes.val().created);
 	});
-	showNote(key);
+	showNote(currentKey);
 }
 
 function addTableEntry(title, key, date) {
@@ -129,15 +130,62 @@ function showNote(noteKey) {
 		var noteform = document.getElementById('note-form');
 		ReactDOM.render(noteElement, noteform);
 
-		ReactDOM.render("Save", document.getElementById('save-button'));
+		showNoteFiles(noteKey);
+
 		currentKey = snapshot.key;
 		createDate = snapshot.val().created;
 	});
 }
 
+function showNoteFiles(noteKey) {
+	var filesRef = storageRef.child('/files/' + uid + '/' + noteKey);
+	var fileDisplay = document.getElementById('file-display');
+	ReactDOM.render(React.createElement('div', null), fileDisplay);
+
+	var notesMeta = db.ref('notes/' + uid + '/' + noteKey + '/files').once('value').then(function (snapshot) {
+		if (snapshot.hasChildren()) {
+			var fileArray = Object.values(snapshot.exportVal());
+			console.log(fileArray);
+			createImageList(fileArray, filesRef, fileDisplay);
+		} else {
+			//snackbarToast("No files.");
+		}
+	});
+}
+
+function createImageList(fileArray, filesRef, fileDisplay) {
+
+	var promises = fileArray.map(function (file) {
+		return filesRef.child(file.name).getDownloadURL().then(function (url) {
+			return React.createElement(ImageHolder, { path: url, name: file.name });
+		});
+	});
+	Promise.all(promises).then(function (imgElements) {
+		ReactDOM.render(imgElements, fileDisplay);
+		//snackbarToast("Finished loading files");
+	});
+}
+
+function ImageHolder(props) {
+	var style = 'background-image:url(' + props.path + ')';
+	var styles = {
+		backgroundImage: 'url(' + props.path + ')'
+	};
+	styles.backgroundImage = 'url(' + props.path + ')';
+	return React.createElement(
+		'div',
+		{ className: 'mdl-card mdl-cell mdl-cell--6-col shadow--2dp' },
+		React.createElement('img', { className: 'file-image', src: props.path, alt: props.name }),
+		React.createElement(
+			'h2',
+			{ className: 'image-text mdl-card__supporting-text' },
+			props.name
+		)
+	);
+}
+
 var saveButton = document.getElementById('save-button');
 saveButton.addEventListener('click', function (ev) {
-	//alert("Save button clicked");
 	var dateObj = new Date();
 
 	var noteData = {
@@ -146,21 +194,77 @@ saveButton.addEventListener('click', function (ev) {
 		created: createDate,
 		updated: dateObj.toJSON()
 	};
-	var updates = {};
-	updates['/notes/' + uid + '/' + currentKey] = noteData;
-	db.ref().update(updates);
-	snackbarToast('"' + noteData.title + '" saved.');
+	db.ref('/notes/' + uid + '/' + currentKey).once('value').then(function (snapshot) {
+		if (snapshot.hasChild('files')) {
+			noteData.files = snapshot.child('files').val();
+		} else {
+			snackbarToast("No files to update.");
+		}
+		var updates = {};
+		updates['/notes/' + uid + '/' + currentKey] = noteData;
+		db.ref().update(updates);
+		snackbarToast('"' + noteData.title + '" saved.');
+	});
 });
+
+function deleteFile(path) {
+	storageRef.child(path).delete().then(function () {
+		snackbarToast("Deleted: " + path);
+	}).catch(function (error) {
+		snackbarToast("Failed to delete files.");
+		console.log(error.message);
+	});
+}
 
 var deleteButton = document.getElementById('delete-button');
 deleteButton.addEventListener('click', function (ev) {
 	var title = document.getElementById('title-input').value;
-	db.ref('/notes/' + uid + '/' + currentKey).remove().then(function () {
+	var curNote = db.ref('/notes/' + uid + '/' + currentKey);
+	curNote.once('value').then(function (snapshot) {
+		if (snapshot.hasChild('files')) {
+			var curFiles = snapshot.child('files');
+			curFiles.forEach(function (cs) {
+				deleteFile(cs.val().path);
+			});
+		}
+	});
+
+	curNote.remove().then(function () {
 		snackbarToast('"' + title + '" deleted.');
+		currentKey == null;
 	}).catch(function (error) {
 		snackbarToast('Failed to delete "' + title + '"');
 	});
 });
+
+var addFileButton = document.getElementById("add-file-button");
+var fileInput = document.getElementById("file-input");
+addFileButton.addEventListener('click', function (ev) {
+	fileInput.click();
+});
+
+fileInput.addEventListener('change', function (ev) {
+	var selectedFile = fileInput.files[0];
+	addFile(selectedFile);
+});
+
+function addFile(file) {
+	var uidKey = uid + '/' + currentKey;
+	var fileRef = storageRef.child('files/' + uidKey + '/' + file.name);
+	fileRef.put(file).then(function (snapshot) {
+		snackbarToast('Uploaded "' + file.name + '"');
+		showNoteFiles(currentKey);
+	}).catch(function (error) {
+		snackbarToast('Failed to upload "' + file.name + '"');
+		console.log(error.message);
+	});
+
+	var fileMeta = db.ref().child('notes/' + uidKey + '/files/' + file.name.slice(0, -4)).set({
+		name: file.name,
+		path: fileRef.fullPath,
+		type: file.type
+	});
+}
 
 function snackbarToast(toast) {
 	var snackbar = document.getElementById('note-snackbar');

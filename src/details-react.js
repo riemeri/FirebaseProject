@@ -2,8 +2,10 @@
 var user = firebase.auth().currentUser;
 var name, email, photoUrl, uid, emailVerified;
 var db = firebase.database();
+var storageRef = firebase.storage().ref();
+var imgElements = [];
 
-let currentKey;
+let currentKey = null;
 let createDate;
 let notesBody = document.getElementById('notes-body');
 let noteDisplay = document.getElementById('note-display');
@@ -46,7 +48,6 @@ logoutBtn.addEventListener('click', (ev) => {
 let addButton = document.getElementById('add-button');
 addButton.addEventListener('click', (ev) => {
     var dateObj = new Date();
-    //var date = "" + dateObj.getMonth() + '-'
 
 	var newKey = db.ref().child('notes/'+ uid).push({
 		title: 'New note',
@@ -56,6 +57,7 @@ addButton.addEventListener('click', (ev) => {
 	}).key;
 	
 	showNote(newKey);
+	currentKey = newKey;
 });
 
 function checkTable(id) {
@@ -68,17 +70,16 @@ function checkTable(id) {
 
 function updateTable(snapshot) {
 	notesBody.innerHTML = '';
-	var key;
 	var fst = 0;
 	snapshot.forEach(function (notes){
-		if (fst == 0) {
-			key = notes.key;
+		if (currentKey == null && fst == 0) {
+			currentKey = notes.key;
 			fst = 1;
 		}
 		//var len = notes.val().content.length;
 		addTableEntry(notes.val().title, notes.key, notes.val().created);
 	});
-	showNote(key);
+	showNote(currentKey);
 }
 
 function addTableEntry(title, key, date) {
@@ -115,43 +116,148 @@ function showNote(noteKey) {
         );
 
 		var noteform = document.getElementById('note-form');
-        ReactDOM.render(noteElement, noteform);
+		ReactDOM.render(noteElement, noteform);
+		
+		showNoteFiles(noteKey);
 
-        ReactDOM.render("Save", document.getElementById('save-button'));
         currentKey = snapshot.key;
         createDate = snapshot.val().created;
 	});
 }
 
+function showNoteFiles(noteKey) {
+	var filesRef = storageRef.child('/files/' + uid + '/' + noteKey);
+	var fileDisplay = document.getElementById('file-display');
+	ReactDOM.render(<div></div>, fileDisplay);
+
+	var notesMeta = db.ref('notes/' + uid + '/' + noteKey + '/files').once('value')
+		.then(function(snapshot) {
+			if (snapshot.hasChildren()) {
+				var fileArray = Object.values(snapshot.exportVal());
+				console.log(fileArray);
+				createImageList(fileArray, filesRef, fileDisplay);
+			}
+			else {
+				//snackbarToast("No files.");
+			}
+		});
+}
+
+function createImageList(fileArray, filesRef, fileDisplay) {
+
+	var promises = fileArray.map(function(file) {
+		return filesRef.child(file.name).getDownloadURL().then(url => {
+			return <ImageHolder path={url} name={file.name}/>;
+		})
+	});
+	Promise.all(promises).then(function(imgElements) {
+		ReactDOM.render(imgElements, fileDisplay);
+		//snackbarToast("Finished loading files");
+	});	
+}
+
+function ImageHolder(props) {
+	var style = 'background-image:url(' + props.path + ')'
+	const styles = {
+		backgroundImage: 'url(' + props.path + ')'
+	};
+	styles.backgroundImage = 'url(' + props.path + ')';
+	return 	<div className="mdl-card mdl-cell mdl-cell--6-col shadow--2dp">
+				<img className="file-image" src={props.path} alt={props.name}></img>
+				<h2 className="image-text mdl-card__supporting-text">{props.name}</h2>
+			</div>;
+}
+
+
 let saveButton = document.getElementById('save-button');
 saveButton.addEventListener('click', (ev) => {
-    //alert("Save button clicked");
     var dateObj = new Date();
 
     var noteData = {
         title: document.getElementById('title-input').value,
         content: document.getElementById('text-input').value,
         created: createDate,
-        updated: dateObj.toJSON()
-    };
-    var updates = {};
-    updates['/notes/' + uid + '/' + currentKey] = noteData;
-    db.ref().update(updates);
-    snackbarToast('"' + noteData.title + '" saved.');
+		updated: dateObj.toJSON()
+	};
+	db.ref('/notes/' + uid + '/' + currentKey).once('value')
+		.then(function(snapshot) {
+			if (snapshot.hasChild('files')) {
+				noteData.files = snapshot.child('files').val();
+			}
+			else {
+				snackbarToast("No files to update.");
+			}
+			var updates = {};
+			updates['/notes/' + uid + '/' + currentKey] = noteData;
+			db.ref().update(updates);
+			snackbarToast('"' + noteData.title + '" saved.');
+		});
 });
+
+function deleteFile(path) {
+	storageRef.child(path).delete().then(function() {
+		snackbarToast("Deleted: " + path);
+	}).catch(function(error) {
+		snackbarToast("Failed to delete files.");
+		console.log(error.message);
+	});
+}
 
 let deleteButton = document.getElementById('delete-button');
 deleteButton.addEventListener('click', (ev) => {
-        var title = document.getElementById('title-input').value;
-    db.ref('/notes/' + uid + '/' + currentKey).remove()
+	var title = document.getElementById('title-input').value;
+	var curNote = db.ref('/notes/' + uid + '/' + currentKey);
+	curNote.once('value')
+		.then(function(snapshot) {
+			if (snapshot.hasChild('files')) {
+				var curFiles = snapshot.child('files');
+				curFiles.forEach(function(cs) {
+					deleteFile(cs.val().path);
+				});
+			}
+		});
+
+	curNote.remove()
         .then(function() {
-            snackbarToast('"' + title + '" deleted.');
+			snackbarToast('"' + title + '" deleted.');
+			currentKey == null;
         })
         .catch(function(error) {
             snackbarToast('Failed to delete "' + title + '"')
         });
 });
 
+
+let addFileButton = document.getElementById("add-file-button");
+let fileInput = document.getElementById("file-input");
+addFileButton.addEventListener('click', (ev) => {
+	fileInput.click();
+});
+
+fileInput.addEventListener('change', (ev) => {
+	var selectedFile = fileInput.files[0];
+	addFile(selectedFile);
+});
+
+
+function addFile(file) {
+	var uidKey = uid + '/' + currentKey
+	var fileRef = storageRef.child('files/' + uidKey + '/' + file.name);
+	fileRef.put(file)
+		.then(function(snapshot) {
+			snackbarToast('Uploaded "' + file.name + '"')
+			showNoteFiles(currentKey);
+		}).catch(function(error) {
+			snackbarToast('Failed to upload "' + file.name + '"')
+			console.log(error.message);
+		});
+
+	var fileMeta = db.ref().child('notes/'+ uidKey + '/files/' + file.name.slice(0, -4)).set({
+		name: file.name,
+		path: fileRef.fullPath,
+		type: file.type
+	});
+}
 
 function snackbarToast(toast) {
 	var snackbar = document.getElementById('note-snackbar');
