@@ -1,5 +1,5 @@
 .body-main {
-	margin-top: -35vh;
+	margin-top: -38vh;
 	flex-shrink: 0;
 }
 
@@ -36,9 +36,11 @@
 }
 
 #add-button {
-	position: absolute;
-    bottom: -24px;
-    right: 11px;
+	position: relative;
+    bottom: 9px;
+    margin: 0px;
+    float: right;
+    right: -90%;
 }
 
 #save-button {
@@ -55,6 +57,12 @@
 	float: right;
 }
 
+.delete-file-button {
+	position: absolute;
+    left: 90%;
+    bottom: 8px;
+}
+
 #add-file-button {
 	cursor: pointer;
 }
@@ -69,6 +77,10 @@
 
 .file-image {
 	width: 100%;
+}
+
+.file-card {
+	background: #eee;
 }
 
 .form-button-left {
