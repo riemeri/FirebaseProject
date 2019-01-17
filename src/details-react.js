@@ -39,7 +39,6 @@ firebase.auth().onAuthStateChanged(function(user) {
 let logoutBtn = document.getElementById('logout');
 logoutBtn.addEventListener('click', (ev) => { 
 	firebase.auth().signOut().then(() => {
-		//window.location.href = "https://fir-notes-2eb81.firebaseapp.com/";
 	}).catch(err => {
 		alert('Error: ' + err.message);
 		console.log(error);
@@ -77,7 +76,6 @@ function updateTable(snapshot) {
 			currentKey = notes.key;
 			fst = 1;
 		}
-		//var len = notes.val().content.length;
 		addTableEntry(notes.val().title, notes.key, notes.val().created);
 	});
 	showNote(currentKey);
@@ -94,7 +92,7 @@ function addTableEntry(title, key, date) {
 	row = notesBody.insertRow(rows);
 	var cell1 = row.insertCell(0);
 	var cell2 = row.insertCell(1);
-	//var cell3 = row.insertCell(2);
+
 	cell1.className = "mdl-data-table__cell--non-numeric";
 	cell1.innerHTML = title;
 	row.addEventListener('click', (ev) => {

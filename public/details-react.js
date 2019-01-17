@@ -38,9 +38,7 @@ firebase.auth().onAuthStateChanged(function (user) {
 //Logout user (which triggers an auth state change, returning the user to the login page
 var logoutBtn = document.getElementById('logout');
 logoutBtn.addEventListener('click', function (ev) {
-	firebase.auth().signOut().then(function () {
-		//window.location.href = "https://fir-notes-2eb81.firebaseapp.com/";
-	}).catch(function (err) {
+	firebase.auth().signOut().then(function () {}).catch(function (err) {
 		alert('Error: ' + err.message);
 		console.log(error);
 	});
@@ -77,7 +75,6 @@ function updateTable(snapshot) {
 			currentKey = notes.key;
 			fst = 1;
 		}
-		//var len = notes.val().content.length;
 		addTableEntry(notes.val().title, notes.key, notes.val().created);
 	});
 	showNote(currentKey);
@@ -94,7 +91,7 @@ function addTableEntry(title, key, date) {
 	row = notesBody.insertRow(rows);
 	var cell1 = row.insertCell(0);
 	var cell2 = row.insertCell(1);
-	//var cell3 = row.insertCell(2);
+
 	cell1.className = "mdl-data-table__cell--non-numeric";
 	cell1.innerHTML = title;
 	row.addEventListener('click', function (ev) {
