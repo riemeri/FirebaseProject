@@ -5,7 +5,7 @@ var db = firebase.database();
 var storageRef = firebase.storage().ref();
 var imgElements = [];
 
-let currentKey;
+let currentKey = null;
 let createDate;
 let notesBody = document.getElementById('notes-body');
 let noteDisplay = document.getElementById('note-display');
@@ -57,6 +57,7 @@ addButton.addEventListener('click', (ev) => {
 	}).key;
 	
 	showNote(newKey);
+	currentKey = newKey;
 });
 
 function checkTable(id) {
@@ -69,17 +70,16 @@ function checkTable(id) {
 
 function updateTable(snapshot) {
 	notesBody.innerHTML = '';
-	var key;
 	var fst = 0;
 	snapshot.forEach(function (notes){
-		if (fst == 0) {
-			key = notes.key;
+		if (currentKey == null && fst == 0) {
+			currentKey = notes.key;
 			fst = 1;
 		}
 		//var len = notes.val().content.length;
 		addTableEntry(notes.val().title, notes.key, notes.val().created);
 	});
-	showNote(key);
+	showNote(currentKey);
 }
 
 function addTableEntry(title, key, date) {
@@ -132,17 +132,18 @@ function showNoteFiles(noteKey) {
 
 	var notesMeta = db.ref('notes/' + uid + '/' + noteKey + '/files').once('value')
 		.then(function(snapshot) {
-			var len = snapshot.length;
 			if (snapshot.hasChildren()) {
 				var fileArray = Object.values(snapshot.exportVal());
-				createImageList(fileArray, filesRef);
+				console.log(fileArray);
+				createImageList(fileArray, filesRef, fileDisplay);
 			}
-
+			else {
+				//snackbarToast("No files.");
+			}
 		});
 }
 
-function createImageList(fileArray, filesRef) {
-	var fileDisplay = document.getElementById('file-display');
+function createImageList(fileArray, filesRef, fileDisplay) {
 
 	var promises = fileArray.map(function(file) {
 		return filesRef.child(file.name).getDownloadURL().then(url => {
@@ -150,15 +151,10 @@ function createImageList(fileArray, filesRef) {
 		})
 	});
 	Promise.all(promises).then(function(imgElements) {
-		console.log(imgElements);
 		ReactDOM.render(imgElements, fileDisplay);
-		snackbarToast("Finished loading files");
-	});
-
-	
+		//snackbarToast("Finished loading files");
+	});	
 }
-//<img src={props.path} alt={props.name}></img>
-//<div className="file-image" style={styles}></div>
 
 function ImageHolder(props) {
 	var style = 'background-image:url(' + props.path + ')'
@@ -166,10 +162,12 @@ function ImageHolder(props) {
 		backgroundImage: 'url(' + props.path + ')'
 	};
 	styles.backgroundImage = 'url(' + props.path + ')';
-	return 	<div className="mdl-card mdl-cell mdl-cell--6-col">
+	return 	<div className="mdl-card mdl-cell mdl-cell--6-col shadow--2dp">
 				<img className="file-image" src={props.path} alt={props.name}></img>
+				<h2 className="image-text mdl-card__supporting-text">{props.name}</h2>
 			</div>;
 }
+
 
 let saveButton = document.getElementById('save-button');
 saveButton.addEventListener('click', (ev) => {
@@ -179,25 +177,56 @@ saveButton.addEventListener('click', (ev) => {
         title: document.getElementById('title-input').value,
         content: document.getElementById('text-input').value,
         created: createDate,
-        updated: dateObj.toJSON()
-    };
-    var updates = {};
-    updates['/notes/' + uid + '/' + currentKey] = noteData;
-    db.ref().update(updates);
-    snackbarToast('"' + noteData.title + '" saved.');
+		updated: dateObj.toJSON()
+	};
+	db.ref('/notes/' + uid + '/' + currentKey).once('value')
+		.then(function(snapshot) {
+			if (snapshot.hasChild('files')) {
+				noteData.files = snapshot.child('files').val();
+			}
+			else {
+				snackbarToast("No files to update.");
+			}
+			var updates = {};
+			updates['/notes/' + uid + '/' + currentKey] = noteData;
+			db.ref().update(updates);
+			snackbarToast('"' + noteData.title + '" saved.');
+		});
 });
+
+function deleteFile(path) {
+	storageRef.child(path).delete().then(function() {
+		snackbarToast("Deleted: " + path);
+	}).catch(function(error) {
+		snackbarToast("Failed to delete files.");
+		console.log(error.message);
+	});
+}
 
 let deleteButton = document.getElementById('delete-button');
 deleteButton.addEventListener('click', (ev) => {
 	var title = document.getElementById('title-input').value;
-    db.ref('/notes/' + uid + '/' + currentKey).remove()
+	var curNote = db.ref('/notes/' + uid + '/' + currentKey);
+	curNote.once('value')
+		.then(function(snapshot) {
+			if (snapshot.hasChild('files')) {
+				var curFiles = snapshot.child('files');
+				curFiles.forEach(function(cs) {
+					deleteFile(cs.val().path);
+				});
+			}
+		});
+
+	curNote.remove()
         .then(function() {
-            snackbarToast('"' + title + '" deleted.');
+			snackbarToast('"' + title + '" deleted.');
+			currentKey == null;
         })
         .catch(function(error) {
             snackbarToast('Failed to delete "' + title + '"')
         });
 });
+
 
 let addFileButton = document.getElementById("add-file-button");
 let fileInput = document.getElementById("file-input");
@@ -209,6 +238,7 @@ fileInput.addEventListener('change', (ev) => {
 	var selectedFile = fileInput.files[0];
 	addFile(selectedFile);
 });
+
 
 function addFile(file) {
 	var uidKey = uid + '/' + currentKey

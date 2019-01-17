@@ -63,8 +63,12 @@
 	padding: 40px 28px;
 }
 
-.file-display {
+#file-display {
 	margin-top: 15px;
+}
+
+.file-image {
+	width: 100%;
 }
 
 .form-button-left {
@@ -106,6 +110,11 @@
     margin-right: auto;
 }
 
+.image-text {
+	padding: 2px;
+    margin: 10px;
+}
+
 .note-label {
 	top: 0px;
 }
@@ -120,8 +129,4 @@
     margin-right: auto;
     width: 400px;
     max-width: -webkit-fill-available;
-}
-
-.file-image {
-	width: 100%;
 }
