@@ -36,9 +36,11 @@
 }
 
 #add-button {
-	position: absolute;
-    bottom: -24px;
-    right: 11px;
+	position: relative;
+    bottom: 9px;
+    margin: 0px;
+    float: right;
+    right: -90%;
 }
 
 #save-button {

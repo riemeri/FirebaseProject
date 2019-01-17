@@ -27,7 +27,8 @@ firebase.auth().onAuthStateChanged(function(user) {
 			email: email,
 		});
 
-		checkTable(uid);
+		//checkTable(uid);
+		manualUpdate();
 	} else {
 		// No user is signed in.
 		window.location.href = "https://fir-notes-2eb81.firebaseapp.com/";
@@ -49,15 +50,15 @@ let addButton = document.getElementById('add-button');
 addButton.addEventListener('click', (ev) => {
     var dateObj = new Date();
 
-	var newKey = db.ref().child('notes/'+ uid).push({
+	currentKey = db.ref().child('notes/'+ uid).push({
 		title: 'New note',
 		content: '',
 		created: dateObj.toJSON(),
 		updated: dateObj.toJSON()
 	}).key;
 	
-	showNote(newKey);
-	currentKey = newKey;
+	manualUpdate();
+	//showNote(currentKey);
 });
 
 function checkTable(id) {
@@ -80,6 +81,12 @@ function updateTable(snapshot) {
 		addTableEntry(notes.val().title, notes.key, notes.val().created);
 	});
 	showNote(currentKey);
+}
+
+function manualUpdate() {
+	db.ref('/notes/' + uid).once('value', (snapshot) => {
+		updateTable(snapshot);
+	});
 }
 
 function addTableEntry(title, key, date) {
@@ -134,7 +141,6 @@ function showNoteFiles(noteKey) {
 		.then(function(snapshot) {
 			if (snapshot.hasChildren()) {
 				var fileArray = Object.values(snapshot.exportVal());
-				console.log(fileArray);
 				createImageList(fileArray, filesRef, fileDisplay);
 			}
 			else {
@@ -147,7 +153,14 @@ function createImageList(fileArray, filesRef, fileDisplay) {
 
 	var promises = fileArray.map(function(file) {
 		return filesRef.child(file.name).getDownloadURL().then(url => {
-			return <ImageHolder path={url} name={file.name}/>;
+			var tag = file.name.slice(-4).toLowerCase();
+			if (tag == '.jpg' || tag == '.png') {
+				return <ImageHolder path={url} name={file.name}/>;
+			}
+			else {
+				console.log(tag);
+				return <FileHolder path={url} name={file.name}/>;
+			}
 		})
 	});
 	Promise.all(promises).then(function(imgElements) {
@@ -157,17 +170,17 @@ function createImageList(fileArray, filesRef, fileDisplay) {
 }
 
 function ImageHolder(props) {
-	var style = 'background-image:url(' + props.path + ')'
-	const styles = {
-		backgroundImage: 'url(' + props.path + ')'
-	};
-	styles.backgroundImage = 'url(' + props.path + ')';
 	return 	<div className="mdl-card mdl-cell mdl-cell--6-col shadow--2dp">
 				<img className="file-image" src={props.path} alt={props.name}></img>
 				<h2 className="image-text mdl-card__supporting-text">{props.name}</h2>
 			</div>;
 }
 
+function FileHolder(props) {
+	return 	<div className="mdl-card mdl-cell mdl-cell--6-col shadow--2dp">
+				<a className="mdl-card__supporting-text  mdl-components__link" href={props.path}>{props.name}</a>
+			</div>;
+}
 
 let saveButton = document.getElementById('save-button');
 saveButton.addEventListener('click', (ev) => {
@@ -190,8 +203,10 @@ saveButton.addEventListener('click', (ev) => {
 			var updates = {};
 			updates['/notes/' + uid + '/' + currentKey] = noteData;
 			db.ref().update(updates);
+			manualUpdate();
 			snackbarToast('"' + noteData.title + '" saved.');
 		});
+
 });
 
 function deleteFile(path) {
@@ -220,7 +235,8 @@ deleteButton.addEventListener('click', (ev) => {
 	curNote.remove()
         .then(function() {
 			snackbarToast('"' + title + '" deleted.');
-			currentKey == null;
+			currentKey = null;
+			manualUpdate();
         })
         .catch(function(error) {
             snackbarToast('Failed to delete "' + title + '"')
@@ -243,9 +259,10 @@ fileInput.addEventListener('change', (ev) => {
 function addFile(file) {
 	var uidKey = uid + '/' + currentKey
 	var fileRef = storageRef.child('files/' + uidKey + '/' + file.name);
+	snackbarToast("Uploading: " + file.name);
 	fileRef.put(file)
 		.then(function(snapshot) {
-			snackbarToast('Uploaded "' + file.name + '"')
+			snackbarToast('Successfully uploaded "' + file.name + '"')
 			showNoteFiles(currentKey);
 		}).catch(function(error) {
 			snackbarToast('Failed to upload "' + file.name + '"')
@@ -257,6 +274,7 @@ function addFile(file) {
 		path: fileRef.fullPath,
 		type: file.type
 	});
+	showNote(currentKey);
 }
 
 function snackbarToast(toast) {
