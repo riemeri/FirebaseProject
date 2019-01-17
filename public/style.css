@@ -1,5 +1,5 @@
 .body-main {
-	margin-top: -38vh;
+	margin-top: -39.5vh;
 	flex-shrink: 0;
 }
 
@@ -18,8 +18,8 @@
 
 .body-content {
 	border-radius: 2px;
-    padding: 8px 56px 30px;
-    margin-bottom: 80px;
+    padding: 8px calc(3% + 5px) 24px;
+    margin-bottom: 10px;
     margin-left: auto;
 	margin-right: auto;
 	display: block;
@@ -27,11 +27,11 @@
 
 .list-box {
 	border-radius: 2px;
-    padding: 8px 36px 36px;
-    margin-bottom: 80px;
+    padding: 8px calc(1% + 15px) 4px;
+    margin-bottom: 10px;
     margin-left: auto;
     margin-right: auto;
-    width: 430px;
+    max-width: 450px;
     overflow: visible;
 }
 
@@ -40,31 +40,37 @@
     bottom: 9px;
     margin: 0px;
     float: right;
-    right: -90%;
+    right: calc(-96% + 26px);
 }
 
 #save-button {
-	width: 140px;
-    margin-left: auto;
-	margin-right: 10px;
-	float: right;
-}
-
-#delete-button {
-	width: 140px;
+	width: 38%;
+    max-width: 140px;
+    min-width: 90px;
     margin-left: auto;
 	margin-right: auto;
 	float: right;
 }
 
+#delete-button {
+	width: 38%;
+    max-width: 140px;
+    min-width: 90px;
+    margin-left: 10px;
+	margin-right: auto;
+	float: right;
+}
+
 .delete-file-button {
-	position: absolute;
-    left: 90%;
-    bottom: 8px;
+	right: 3px;
+    bottom: 0px;
+    float: right;
 }
 
 #add-file-button {
 	cursor: pointer;
+	position: relative;
+    top: 15px;
 }
 
 .body-layout {
@@ -81,6 +87,19 @@
 
 .file-card {
 	background: #eee;
+	display: block;
+	height: auto;
+    min-height: auto;
+}
+
+.file-card-text {
+	bottom: -6px;
+	position: relative;
+	padding: 1px 9px;
+}
+
+.no-image {
+	top: calc(50% - 10px);
 }
 
 .form-button-left {
@@ -102,6 +121,15 @@
 	margin-left: auto;
 	margin-right: auto;
 	max-width: 198px;
+}
+
+.login-container {
+	border-radius: 2px;
+    padding: 52px calc(3% + 5px) 54px;
+    margin-bottom: 10px;
+    margin-left: auto;
+	margin-right: auto;
+	display: block;
 }
 
 .login-banner {

@@ -122,7 +122,7 @@ function showNote(noteKey) {
 			React.createElement(
 				'div',
 				{ className: 'edit-content mdl-textfield mdl-js-textfield' },
-				React.createElement('textarea', { type: 'text', rows: '12', className: 'mdl-textfield__input', id: 'text-input', defaultValue: snapshot.val().content }),
+				React.createElement('textarea', { type: 'text', rows: '10', className: 'mdl-textfield__input', id: 'text-input', defaultValue: snapshot.val().content }),
 				React.createElement(
 					'label',
 					{ className: 'note-label mdl-textfield__label', htmlFor: 'text-input' },
@@ -184,11 +184,11 @@ function FileHolder(props) {
 	if (props.tag == '.jpg' || props.tag == '.png') {
 		return React.createElement(
 			'div',
-			{ className: 'file-card mdl-card mdl-cell mdl-cell--6-col shadow--2dp' },
+			{ className: 'file-card mdl-card mdl-cell mdl-cell--6-col mdl-cell--8-col-phone shadow--2dp' },
 			React.createElement('img', { className: 'file-image', src: props.path, alt: props.name }),
 			React.createElement(
 				'a',
-				{ className: 'mdl-card__supporting-text', href: props.path },
+				{ className: 'file-card-text mdl-card__supporting-text', href: props.path },
 				props.name
 			),
 			React.createElement(
@@ -204,10 +204,10 @@ function FileHolder(props) {
 	} else {
 		return React.createElement(
 			'div',
-			{ className: 'file-card mdl-card mdl-cell mdl-cell--6-col shadow--2dp' },
+			{ className: 'file-card mdl-card mdl-cell mdl-cell--6-col mdl-cell--8-col-phone shadow--2dp' },
 			React.createElement(
 				'a',
-				{ className: 'mdl-card__supporting-text  mdl-components__link', href: props.path },
+				{ className: 'file-card-text no-image mdl-card__supporting-text  mdl-components__link', href: props.path },
 				props.name
 			),
 			React.createElement(
