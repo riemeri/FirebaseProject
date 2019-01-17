@@ -164,43 +164,66 @@ function createImageList(fileArray, filesRef, fileDisplay) {
 	var promises = fileArray.map(function (file) {
 		return filesRef.child(file.name).getDownloadURL().then(function (url) {
 			var tag = file.name.slice(-4).toLowerCase();
-			if (tag == '.jpg' || tag == '.png') {
-				return React.createElement(ImageHolder, { path: url, name: file.name });
-			} else {
-				console.log(tag);
-				return React.createElement(FileHolder, { path: url, name: file.name });
-			}
+			return React.createElement(FileHolder, { path: url, name: file.name, tag: tag });
 		});
 	});
 	Promise.all(promises).then(function (imgElements) {
 		ReactDOM.render(imgElements, fileDisplay);
-		//snackbarToast("Finished loading files");
 	});
 }
 
-function ImageHolder(props) {
-	return React.createElement(
-		'div',
-		{ className: 'mdl-card mdl-cell mdl-cell--6-col shadow--2dp' },
-		React.createElement('img', { className: 'file-image', src: props.path, alt: props.name }),
-		React.createElement(
-			'h2',
-			{ className: 'image-text mdl-card__supporting-text' },
-			props.name
-		)
-	);
-}
-
 function FileHolder(props) {
-	return React.createElement(
-		'div',
-		{ className: 'mdl-card mdl-cell mdl-cell--6-col shadow--2dp' },
-		React.createElement(
-			'a',
-			{ className: 'mdl-card__supporting-text  mdl-components__link', href: props.path },
-			props.name
-		)
-	);
+	function deleteClicked() {
+		var path = '/files/' + uid + '/' + currentKey + '/' + props.name;
+		deleteFile(path);
+		db.ref('/notes/' + uid + '/' + currentKey + '/files/' + props.name.slice(0, -4)).remove().then(function () {
+			//snackbarToast("Entry removed.");
+		}).catch(function (error) {
+			snackbarToast("Failed to remove DB entry.");
+			console.log(error.message);
+		});
+		showNote(currentKey);
+	}
+	if (props.tag == '.jpg' || props.tag == '.png') {
+		return React.createElement(
+			'div',
+			{ className: 'file-card mdl-card mdl-cell mdl-cell--6-col shadow--2dp' },
+			React.createElement('img', { className: 'file-image', src: props.path, alt: props.name }),
+			React.createElement(
+				'a',
+				{ className: 'mdl-card__supporting-text', href: props.path },
+				props.name
+			),
+			React.createElement(
+				'button',
+				{ onClick: deleteClicked, className: 'delete-file-button mdl-button mdl-js-button mdl-button--icon' },
+				React.createElement(
+					'i',
+					{ className: 'material-icons' },
+					'delete_forever'
+				)
+			)
+		);
+	} else {
+		return React.createElement(
+			'div',
+			{ className: 'file-card mdl-card mdl-cell mdl-cell--6-col shadow--2dp' },
+			React.createElement(
+				'a',
+				{ className: 'mdl-card__supporting-text  mdl-components__link', href: props.path },
+				props.name
+			),
+			React.createElement(
+				'button',
+				{ onClick: deleteClicked, className: 'delete-file-button mdl-button mdl-js-button mdl-button--icon' },
+				React.createElement(
+					'i',
+					{ className: 'material-icons' },
+					'delete_forever'
+				)
+			)
+		);
+	}
 }
 
 var saveButton = document.getElementById('save-button');
@@ -217,7 +240,7 @@ saveButton.addEventListener('click', function (ev) {
 		if (snapshot.hasChild('files')) {
 			noteData.files = snapshot.child('files').val();
 		} else {
-			snackbarToast("No files to update.");
+			//snackbarToast("No files to update.");
 		}
 		var updates = {};
 		updates['/notes/' + uid + '/' + currentKey] = noteData;

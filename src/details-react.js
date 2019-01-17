@@ -154,32 +154,49 @@ function createImageList(fileArray, filesRef, fileDisplay) {
 	var promises = fileArray.map(function(file) {
 		return filesRef.child(file.name).getDownloadURL().then(url => {
 			var tag = file.name.slice(-4).toLowerCase();
-			if (tag == '.jpg' || tag == '.png') {
-				return <ImageHolder path={url} name={file.name}/>;
-			}
-			else {
-				console.log(tag);
-				return <FileHolder path={url} name={file.name}/>;
-			}
+			return <FileHolder path={url} name={file.name} tag={tag}/>;
 		})
 	});
 	Promise.all(promises).then(function(imgElements) {
 		ReactDOM.render(imgElements, fileDisplay);
-		//snackbarToast("Finished loading files");
 	});	
 }
 
-function ImageHolder(props) {
-	return 	<div className="mdl-card mdl-cell mdl-cell--6-col shadow--2dp">
-				<img className="file-image" src={props.path} alt={props.name}></img>
-				<h2 className="image-text mdl-card__supporting-text">{props.name}</h2>
-			</div>;
-}
 
 function FileHolder(props) {
-	return 	<div className="mdl-card mdl-cell mdl-cell--6-col shadow--2dp">
+	function deleteClicked() { 
+		var path = '/files/' + uid + '/' + currentKey + '/' + props.name;
+		deleteFile(path);
+		db.ref('/notes/' + uid + '/' + currentKey + '/files/' + props.name.slice(0,-4)).remove()
+			.then(function() {
+				//snackbarToast("Entry removed.");
+			}).catch(function(error) {
+				snackbarToast("Failed to remove DB entry.");
+				console.log(error.message);
+			});
+		showNote(currentKey);
+	}
+	if (props.tag == '.jpg' || props.tag == '.png') {
+		return 	(
+			<div className="file-card mdl-card mdl-cell mdl-cell--6-col shadow--2dp">
+				<img className="file-image" src={props.path} alt={props.name}></img>
+				<a className="mdl-card__supporting-text" href={props.path}>{props.name}</a>
+				<button onClick={deleteClicked} className="delete-file-button mdl-button mdl-js-button mdl-button--icon">
+					<i className="material-icons">delete_forever</i>
+				</button>
+			</div>
+		);
+	}
+	else {
+		return 	(
+			<div className="file-card mdl-card mdl-cell mdl-cell--6-col shadow--2dp">
 				<a className="mdl-card__supporting-text  mdl-components__link" href={props.path}>{props.name}</a>
-			</div>;
+				<button onClick={deleteClicked} className="delete-file-button mdl-button mdl-js-button mdl-button--icon">
+					<i className="material-icons">delete_forever</i>
+				</button>
+			</div>
+		);
+	}
 }
 
 let saveButton = document.getElementById('save-button');
@@ -198,7 +215,7 @@ saveButton.addEventListener('click', (ev) => {
 				noteData.files = snapshot.child('files').val();
 			}
 			else {
-				snackbarToast("No files to update.");
+				//snackbarToast("No files to update.");
 			}
 			var updates = {};
 			updates['/notes/' + uid + '/' + currentKey] = noteData;
