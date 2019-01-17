@@ -2,6 +2,8 @@
 var user = firebase.auth().currentUser;
 var name, email, photoUrl, uid, emailVerified;
 var db = firebase.database();
+var storageRef = firebase.storage().ref();
+var imgElements = [];
 
 var currentKey = void 0;
 var createDate = void 0;
@@ -46,7 +48,6 @@ logoutBtn.addEventListener('click', function (ev) {
 var addButton = document.getElementById('add-button');
 addButton.addEventListener('click', function (ev) {
 	var dateObj = new Date();
-	//var date = "" + dateObj.getMonth() + '-'
 
 	var newKey = db.ref().child('notes/' + uid).push({
 		title: 'New note',
@@ -129,15 +130,59 @@ function showNote(noteKey) {
 		var noteform = document.getElementById('note-form');
 		ReactDOM.render(noteElement, noteform);
 
-		ReactDOM.render("Save", document.getElementById('save-button'));
+		showNoteFiles(noteKey);
+
 		currentKey = snapshot.key;
 		createDate = snapshot.val().created;
 	});
 }
 
+function showNoteFiles(noteKey) {
+	var filesRef = storageRef.child('/files/' + uid + '/' + noteKey);
+	var fileDisplay = document.getElementById('file-display');
+	ReactDOM.render(React.createElement('div', null), fileDisplay);
+
+	var notesMeta = db.ref('notes/' + uid + '/' + noteKey + '/files').once('value').then(function (snapshot) {
+		var len = snapshot.length;
+		if (snapshot.hasChildren()) {
+			var fileArray = Object.values(snapshot.exportVal());
+			createImageList(fileArray, filesRef);
+		}
+	});
+}
+
+function createImageList(fileArray, filesRef) {
+	var fileDisplay = document.getElementById('file-display');
+
+	var promises = fileArray.map(function (file) {
+		return filesRef.child(file.name).getDownloadURL().then(function (url) {
+			return React.createElement(ImageHolder, { path: url, name: file.name });
+		});
+	});
+	Promise.all(promises).then(function (imgElements) {
+		console.log(imgElements);
+		ReactDOM.render(imgElements, fileDisplay);
+		snackbarToast("Finished loading files");
+	});
+}
+//<img src={props.path} alt={props.name}></img>
+//<div className="file-image" style={styles}></div>
+
+function ImageHolder(props) {
+	var style = 'background-image:url(' + props.path + ')';
+	var styles = {
+		backgroundImage: 'url(' + props.path + ')'
+	};
+	styles.backgroundImage = 'url(' + props.path + ')';
+	return React.createElement(
+		'div',
+		{ className: 'mdl-card mdl-cell mdl-cell--6-col' },
+		React.createElement('img', { className: 'file-image', src: props.path, alt: props.name })
+	);
+}
+
 var saveButton = document.getElementById('save-button');
 saveButton.addEventListener('click', function (ev) {
-	//alert("Save button clicked");
 	var dateObj = new Date();
 
 	var noteData = {
@@ -161,6 +206,35 @@ deleteButton.addEventListener('click', function (ev) {
 		snackbarToast('Failed to delete "' + title + '"');
 	});
 });
+
+var addFileButton = document.getElementById("add-file-button");
+var fileInput = document.getElementById("file-input");
+addFileButton.addEventListener('click', function (ev) {
+	fileInput.click();
+});
+
+fileInput.addEventListener('change', function (ev) {
+	var selectedFile = fileInput.files[0];
+	addFile(selectedFile);
+});
+
+function addFile(file) {
+	var uidKey = uid + '/' + currentKey;
+	var fileRef = storageRef.child('files/' + uidKey + '/' + file.name);
+	fileRef.put(file).then(function (snapshot) {
+		snackbarToast('Uploaded "' + file.name + '"');
+		showNoteFiles(currentKey);
+	}).catch(function (error) {
+		snackbarToast('Failed to upload "' + file.name + '"');
+		console.log(error.message);
+	});
+
+	var fileMeta = db.ref().child('notes/' + uidKey + '/files/' + file.name.slice(0, -4)).set({
+		name: file.name,
+		path: fileRef.fullPath,
+		type: file.type
+	});
+}
 
 function snackbarToast(toast) {
 	var snackbar = document.getElementById('note-snackbar');

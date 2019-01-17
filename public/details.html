@@ -45,7 +45,6 @@
 							<tr>
 								<th class="mdl-data-table__cell--non-numeric">Title</th>
 								<th>Date Added</th>
-								<!--<th>Edit</th>-->
 							</tr>
 						</thead>
 						<tbody id="notes-body">
@@ -60,6 +59,12 @@
 					<button id="save-button" type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
 						Save
 					</button>
+					<button id="add-file-button" type="button" class="mdl-chip mdl-chip--contact">
+						<input id="file-input" type="file" style="display: none"/>
+						<img class="mdl-chip__contact" src="img/baseline_add_circle_black_18dp.png">
+						<span class="mdl-chip__text">Upload File</span>
+					</button>
+					<div id="file-display" class="mdl-grid"></div>
 				</div>
 			</div>
 			

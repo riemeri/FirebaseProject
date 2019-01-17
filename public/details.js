@@ -50,7 +50,7 @@ let addButton = document.getElementById('add-button');
 addButton.addEventListener('click', (ev) => {
 
 	var newKey = db.ref().child('notes/'+ uid).push({
-		title: 'New note yo',
+		title: 'New note',
 		content: 'Write notes here',
 		created: '01-12-2019',
 		updated: '01-12-2019'
