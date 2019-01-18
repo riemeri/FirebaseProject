@@ -184,7 +184,7 @@ function FileHolder(props) {
 	if (props.tag == '.jpg' || props.tag == '.png') {
 		return React.createElement(
 			'div',
-			{ className: 'file-card mdl-card mdl-cell mdl-cell--6-col mdl-cell--8-col-phone shadow--2dp' },
+			{ className: 'file-card mdl-card mdl-cell mdl-cell--6-col mdl-cell--8-col-phone mdl-shadow--2dp' },
 			React.createElement('img', { className: 'file-image', src: props.path, alt: props.name }),
 			React.createElement(
 				'a',
@@ -204,7 +204,7 @@ function FileHolder(props) {
 	} else {
 		return React.createElement(
 			'div',
-			{ className: 'file-card mdl-card mdl-cell mdl-cell--6-col mdl-cell--8-col-phone shadow--2dp' },
+			{ className: 'file-card mdl-card mdl-cell mdl-cell--6-col mdl-cell--8-col-phone mdl-shadow--2dp' },
 			React.createElement(
 				'a',
 				{ className: 'file-card-text no-image mdl-card__supporting-text  mdl-components__link', href: props.path },

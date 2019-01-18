@@ -176,7 +176,7 @@ function FileHolder(props) {
 	}
 	if (props.tag == '.jpg' || props.tag == '.png') {
 		return 	(
-			<div className="file-card mdl-card mdl-cell mdl-cell--6-col mdl-cell--8-col-phone shadow--2dp">
+			<div className="file-card mdl-card mdl-cell mdl-cell--6-col mdl-cell--8-col-phone mdl-shadow--2dp">
 				<img className="file-image" src={props.path} alt={props.name}></img>
 				<a className="file-card-text mdl-card__supporting-text" href={props.path}>{props.name}</a>
 				<button onClick={deleteClicked} className="delete-file-button mdl-button mdl-js-button mdl-button--icon">
@@ -187,7 +187,7 @@ function FileHolder(props) {
 	}
 	else {
 		return 	(
-			<div className="file-card mdl-card mdl-cell mdl-cell--6-col mdl-cell--8-col-phone shadow--2dp">
+			<div className="file-card mdl-card mdl-cell mdl-cell--6-col mdl-cell--8-col-phone mdl-shadow--2dp">
 				<a className="file-card-text no-image mdl-card__supporting-text  mdl-components__link" href={props.path}>{props.name}</a>
 				<button onClick={deleteClicked} className="delete-file-button mdl-button mdl-js-button mdl-button--icon">
 					<i className="material-icons">delete_forever</i>

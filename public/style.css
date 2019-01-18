@@ -18,7 +18,7 @@
 
 .body-content {
 	border-radius: 2px;
-    padding: 8px calc(3% + 5px) 24px;
+    padding: 10px calc(3% + 5px) 24px;
     margin-bottom: 10px;
     margin-left: auto;
 	margin-right: auto;
@@ -160,7 +160,7 @@
 }
 
 .title-label {
-	top: 7px;
+	top: 4px;
 }
 
 #title-input {
