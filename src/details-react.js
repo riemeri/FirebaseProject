@@ -6,9 +6,16 @@ var storageRef = firebase.storage().ref();
 var imgElements = [];
 
 let currentKey = null;
+let categoryKey = null;
+let curNoteKey = null;
+let currentPath = null;
 let createDate;
 let notesBody = document.getElementById('notes-body');
 let noteDisplay = document.getElementById('note-display');
+
+function updateCurrentPath() {
+	currentPath = uid +'/'+ categoryKey +'/notes/'+ curNoteKey;
+}
 
 //On change of auth state, get user info or return home if no one is logged in
 firebase.auth().onAuthStateChanged(function(user) {
@@ -45,23 +52,23 @@ logoutBtn.addEventListener('click', (ev) => {
 	});
 }, false);
 
-let addButton = document.getElementById('add-button');
-addButton.addEventListener('click', (ev) => {
+let addCategoryButton = document.getElementById('add-category-button');
+addCategoryButton.addEventListener('click', (ev) => {
     var dateObj = new Date();
 
-	currentKey = db.ref().child('notes/'+ uid).push({
-		title: 'New note',
-		content: '',
+	categoryKey = db.ref().child('note-categories/'+ uid).push({
+		title: 'New Category',
 		created: dateObj.toJSON(),
 		updated: dateObj.toJSON()
 	}).key;
 	
-	manualUpdate();
+	addNote();
+	//manualUpdate();
 	//showNote(currentKey);
 });
 
 function checkTable(id) {
-	var notesRef = db.ref('/notes/' + id);
+	var notesRef = db.ref('/note-categories/' + id);
 	notesRef.on('value', (snapshot) => {
 		updateTable(snapshot);
 		//alert('table updated');
@@ -70,42 +77,96 @@ function checkTable(id) {
 
 function updateTable(snapshot) {
 	notesBody.innerHTML = '';
-	var fst = 0;
-	snapshot.forEach(function (notes){
-		if (currentKey == null && fst == 0) {
-			currentKey = notes.key;
-			fst = 1;
+	snapshot.forEach(function (category){
+		if (categoryKey == null) {
+			categoryKey = category.key;
 		}
-		addTableEntry(notes.val().title, notes.key, notes.val().created);
+		if (curNoteKey == null) {
+			category.child('notes').forEach(function(note) {
+				curNoteKey = note.key;
+				updateCurrentPath();
+				showNote(curNoteKey);
+				return true;
+			});
+		}
+		addTableEntry(category.val().title, category.key, category.exportVal().notes);
 	});
-	showNote(currentKey);
 }
 
 function manualUpdate() {
-	db.ref('/notes/' + uid).once('value', (snapshot) => {
+	db.ref('/note-categories/' + uid).once('value', (snapshot) => {
 		updateTable(snapshot);
 	});
 }
 
-function addTableEntry(title, key, date) {
+function addTableEntry(title, key, notes) {
+
 	var rows = notesBody.rows.length;
 	row = notesBody.insertRow(rows);
 	var cell1 = row.insertCell(0);
 	var cell2 = row.insertCell(1);
 
 	cell1.className = "mdl-data-table__cell--non-numeric";
-	cell1.innerHTML = title;
-	row.addEventListener('click', (ev) => {
-		showNote(key);
-	});
+	//cell1.innerHTML = title;
+	//row.addEventListener('click', (ev) => {
+	//	showNote(noteKey);
+	//});
 
-    var dateObj = new Date(date);
-    var dateText = '' + (dateObj.getMonth()+1) + '/' + dateObj.getDate() + '/' + dateObj.getFullYear();
-    cell2.innerHTML = dateText;
+    //var dateObj = new Date(date);
+    //var dateText = '' + (dateObj.getMonth()+1) + '/' + dateObj.getDate() + '/' + dateObj.getFullYear();
+	//cell2.innerHTML = dateText;
+	var notesArray =  Object.values(notes);
+	var noteKeys = Object.keys(notes);
+	console.log(notesArray);
+	console.log(noteKeys);
+	var i = 0;
+	const noteList = notesArray.map((note) => {
+		const nKey = noteKeys[i];
+		function doShowNote() {
+			curNoteKey = nKey;
+			categoryKey = key;
+			updateCurrentPath();
+			showNote(nKey);
+		}
+		i = i + 1;
+		return (
+			<li key={note.created}>
+				<a href="#" onClick={doShowNote}>{note.title}</a>
+			</li> )
+	}
+	);
+
+	ReactDOM.render(<ul key={key}>{noteList}</ul> , cell1);
+	ReactDOM.render(<NoteAddButton/>, cell2);
+
 }
 
+function NoteAddButton() {
+	return (
+		<button onClick={addNote} className="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored mdl-shadow--4dp">
+			<i className="material-icons">add</i>
+		</button>
+	)
+}
+
+function addNote() {
+	var dateObj = new Date();
+
+	curNoteKey = db.ref().child('note-categories/'+ uid + '/' + categoryKey + '/notes').push({
+		title: 'New note',
+		content: '',
+		created: dateObj.toJSON(),
+		updated: dateObj.toJSON()
+	}).key;
+	
+	updateCurrentPath();
+	manualUpdate();
+	showNote(curNoteKey);
+}
+
+
 function showNote(noteKey) {
-	db.ref('notes/' + uid + '/' + noteKey).once('value').then(function(snapshot) {
+	db.ref('note-categories/' + uid +'/'+ categoryKey + '/notes/' + noteKey).once('value').then(function(snapshot) {
         const noteElement = (
             <form key={snapshot.key}>
                 <div className="edit-note-title mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
@@ -123,10 +184,13 @@ function showNote(noteKey) {
 		var noteform = document.getElementById('note-form');
 		ReactDOM.render(noteElement, noteform);
 		
-		showNoteFiles(noteKey);
+		//showNoteFiles(noteKey);
 
-        currentKey = snapshot.key;
-        createDate = snapshot.val().created;
+        noteKey = snapshot.key;
+		updateCurrentPath();
+		createDate = snapshot.val().created;
+	}).catch(function(error) {
+		console.log(error.message);
 	});
 }
 
@@ -207,7 +271,7 @@ saveButton.addEventListener('click', (ev) => {
         created: createDate,
 		updated: dateObj.toJSON()
 	};
-	db.ref('/notes/' + uid + '/' + currentKey).once('value')
+	db.ref('/note-categories/' + currentPath).once('value')
 		.then(function(snapshot) {
 			if (snapshot.hasChild('files')) {
 				noteData.files = snapshot.child('files').val();
@@ -216,7 +280,7 @@ saveButton.addEventListener('click', (ev) => {
 				//snackbarToast("No files to update.");
 			}
 			var updates = {};
-			updates['/notes/' + uid + '/' + currentKey] = noteData;
+			updates['/note-categories/' + currentPath] = noteData;
 			db.ref().update(updates);
 			manualUpdate();
 			snackbarToast('"' + noteData.title + '" saved.');
@@ -236,7 +300,7 @@ function deleteFile(path) {
 let deleteButton = document.getElementById('delete-button');
 deleteButton.addEventListener('click', (ev) => {
 	var title = document.getElementById('title-input').value;
-	var curNote = db.ref('/notes/' + uid + '/' + currentKey);
+	var curNote = db.ref('/note-categories/' + currentPath);
 	curNote.once('value')
 		.then(function(snapshot) {
 			if (snapshot.hasChild('files')) {
@@ -250,7 +314,9 @@ deleteButton.addEventListener('click', (ev) => {
 	curNote.remove()
         .then(function() {
 			snackbarToast('"' + title + '" deleted.');
-			currentKey = null;
+			categoryKey = null;
+			curNoteKey = null;
+			currentPath = null;
 			manualUpdate();
         })
         .catch(function(error) {
