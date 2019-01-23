@@ -19,101 +19,6 @@ var createDate = void 0;
 var categoryList = document.getElementById('category-list');
 var noteDisplay = document.getElementById('note-display');
 
-function updateCurrentPath() {
-	currentPath = uid + '/' + categoryKey + '/notes/' + curNoteKey;
-}
-
-//On change of auth state, get user info or return home if no one is logged in
-firebase.auth().onAuthStateChanged(function (user) {
-	if (user) {
-		// User is signed in.
-		name = user.displayName;
-		email = user.email;
-		photoUrl = user.photoURL;
-		emailVerified = user.emailVerified;
-		uid = user.uid; // The user's ID, unique to the Firebase project. Do NOT use
-		// this value to authenticate with your backend server, if
-		// you have one. Use User.getToken() instead.
-
-		db.ref('users/' + uid).set({
-			name: name,
-			email: email
-		});
-
-		//checkTable(uid);
-		manualUpdate();
-	} else {
-		// No user is signed in.
-		window.location.href = "https://fir-notes-2eb81.firebaseapp.com/";
-	}
-});
-
-//Logout user (which triggers an auth state change, returning the user to the login page
-var logoutBtn = document.getElementById('logout');
-logoutBtn.addEventListener('click', function (ev) {
-	firebase.auth().signOut().then(function () {}).catch(function (err) {
-		alert('Error: ' + err.message);
-		console.log(error);
-	});
-}, false);
-
-//Add a new category
-var addCategoryButton = document.getElementById('add-category-button');
-addCategoryButton.addEventListener('click', function (ev) {
-	var dateObj = new Date();
-
-	categoryKey = db.ref().child('note-categories/' + uid).push({
-		title: 'New Category',
-		created: dateObj.toJSON(),
-		updated: dateObj.toJSON()
-	}).key;
-
-	addNote();
-});
-
-function checkTable(id) {
-	var notesRef = db.ref('/note-categories/' + id);
-	notesRef.on('value', function (snapshot) {
-		updateTable(snapshot);
-		//alert('table updated');
-	});
-}
-
-function manualUpdate() {
-	db.ref('/note-categories/' + uid).once('value', function (snapshot) {
-		updateTable(snapshot);
-	});
-}
-
-function updateTable(snapshot) {
-	snapshot.forEach(function (category) {
-		if (categoryKey == null) {
-			categoryKey = category.key;
-		}
-		if (curNoteKey == null) {
-			category.child('notes').forEach(function (note) {
-				curNoteKey = note.key;
-				updateCurrentPath();
-				showNote(curNoteKey);
-				return true;
-			});
-		}
-		return true;
-	});
-
-	var catKeys = Object.keys(snapshot.exportVal());
-	var catArray = Object.values(snapshot.exportVal());
-	var i = 0;
-	var catList = catArray.map(function (category) {
-		var cKey = catKeys[i];
-		//console.log(category);
-		i++;
-		return React.createElement(CategoryEntry, { name: category.title, cKey: cKey, notes: category.notes });
-	});
-
-	ReactDOM.render(catList, categoryList);
-}
-
 var CategoryTitle = function (_React$Component) {
 	_inherits(CategoryTitle, _React$Component);
 
@@ -189,6 +94,101 @@ var CategoryTitle = function (_React$Component) {
 
 	return CategoryTitle;
 }(React.Component);
+
+function updateCurrentPath() {
+	currentPath = uid + '/' + categoryKey + '/notes/' + curNoteKey;
+}
+
+//On change of auth state, get user info or return home if no one is logged in
+firebase.auth().onAuthStateChanged(function (user) {
+	if (user) {
+		// User is signed in.
+		name = user.displayName;
+		email = user.email;
+		photoUrl = user.photoURL;
+		emailVerified = user.emailVerified;
+		uid = user.uid; // The user's ID, unique to the Firebase project. Do NOT use
+		// this value to authenticate with your backend server, if
+		// you have one. Use User.getToken() instead.
+
+		db.ref('users/' + uid).set({
+			name: name,
+			email: email
+		});
+
+		//checkTable(uid);
+		manualUpdate();
+	} else {
+		// No user is signed in.
+		window.location.href = "https://fir-notes-2eb81.firebaseapp.com/";
+	}
+});
+
+//Logout user (which triggers an auth state change, returning the user to the login page
+var logoutBtn = document.getElementById('logout');
+logoutBtn.addEventListener('click', function (ev) {
+	firebase.auth().signOut().then(function () {}).catch(function (err) {
+		alert('Error: ' + err.message);
+		console.log(error);
+	});
+}, false);
+
+//Add a new category
+var addCategoryButton = document.getElementById('add-category-button');
+addCategoryButton.addEventListener('click', function (ev) {
+	var dateObj = new Date();
+
+	categoryKey = db.ref().child('note-categories/' + uid).push({
+		title: 'New Category',
+		created: dateObj.toJSON(),
+		updated: dateObj.toJSON()
+	}).key;
+
+	addNote(categoryKey);
+});
+
+function checkTable(id) {
+	var notesRef = db.ref('/note-categories/' + id);
+	notesRef.on('value', function (snapshot) {
+		updateTable(snapshot);
+		//alert('table updated');
+	});
+}
+
+function manualUpdate() {
+	db.ref('/note-categories/' + uid).once('value', function (snapshot) {
+		updateTable(snapshot);
+	});
+}
+
+function updateTable(snapshot) {
+	snapshot.forEach(function (category) {
+		if (categoryKey == null) {
+			categoryKey = category.key;
+		}
+		if (curNoteKey == null) {
+			category.child('notes').forEach(function (note) {
+				curNoteKey = note.key;
+				updateCurrentPath();
+				showNote(curNoteKey);
+				return true;
+			});
+		}
+		return true;
+	});
+
+	var catKeys = Object.keys(snapshot.exportVal());
+	var catArray = Object.values(snapshot.exportVal());
+	var i = 0;
+	var catList = catArray.map(function (category) {
+		var cKey = catKeys[i];
+		//console.log(category);
+		i++;
+		return React.createElement(CategoryEntry, { name: category.title, cKey: cKey, notes: category.notes });
+	});
+
+	ReactDOM.render(catList, categoryList);
+}
 
 function CategoryEntry(props) {
 	function selectCategory() {

@@ -12,6 +12,52 @@ let createDate;
 let categoryList = document.getElementById('category-list');
 let noteDisplay = document.getElementById('note-display');
 
+class CategoryTitle extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {value: props.name, render: 0};
+
+		this.textChange = this.textChange.bind(this);
+		this.edit = this.edit.bind(this);
+		this.save = this.save.bind(this);
+	}
+
+	textChange(event) {
+		this.setState({value: event.target.value});
+	}
+
+	edit() {
+		this.setState({render: 1});
+	}
+	save() {
+		db.ref('/note-categories/' + uid + '/'+ categoryKey).update({title: this.state.value});
+		this.setState({render: 0});
+	}
+
+	render() {
+		if(this.state.render == 0) {
+			return (
+				<div id="cat-title-box">
+					<h4 style={{marginLeft: '14px'}}>{this.state.value}</h4>
+					<button onClick={this.edit} className="edit-cat mdl-button mdl-js-button mdl-button--icon">
+						<i className="material-icons">edit</i>
+					</button>
+				</div>
+			);
+		}
+		else {
+			return (
+				<form>
+					<input id="cat-title" type="text" value={this.state.value} onChange={this.textChange} className="mdl-textfield--input"/>
+					<button onClick={this.save} className="mdl-button mdl-js-button mdl-button--icon">
+						<i className="material-icons">save</i>
+					</button>
+				</form>
+			);
+		}
+	}
+}
+
 function updateCurrentPath() {
 	currentPath = uid +'/'+ categoryKey +'/notes/'+ curNoteKey;
 }
@@ -62,7 +108,7 @@ addCategoryButton.addEventListener('click', (ev) => {
 		updated: dateObj.toJSON()
 	}).key;
 	
-	addNote();
+	addNote(categoryKey);
 });
 
 function checkTable(id) {
@@ -106,52 +152,6 @@ function updateTable(snapshot) {
 	});
 
 	ReactDOM.render(catList, categoryList);
-}
-
-class CategoryTitle extends React.Component {
-	constructor(props) {
-		super(props);
-		this.state = {value: props.name, render: 0};
-
-		this.textChange = this.textChange.bind(this);
-		this.edit = this.edit.bind(this);
-		this.save = this.save.bind(this);
-	}
-
-	textChange(event) {
-		this.setState({value: event.target.value});
-	}
-
-	edit() {
-		this.setState({render: 1});
-	}
-	save() {
-		db.ref('/note-categories/' + uid + '/'+ categoryKey).update({title: this.state.value});
-		this.setState({render: 0});
-	}
-
-	render() {
-		if(this.state.render == 0) {
-			return (
-				<div id="cat-title-box">
-					<h4 style={{marginLeft: '14px'}}>{this.state.value}</h4>
-					<button onClick={this.edit} className="edit-cat mdl-button mdl-js-button mdl-button--icon">
-						<i className="material-icons">edit</i>
-					</button>
-				</div>
-			);
-		}
-		else {
-			return (
-				<form>
-					<input id="cat-title" type="text" value={this.state.value} onChange={this.textChange} className="mdl-textfield--input"/>
-					<button onClick={this.save} className="mdl-button mdl-js-button mdl-button--icon">
-						<i className="material-icons">save</i>
-					</button>
-				</form>
-			);
-		}
-	}
 }
 
 function CategoryEntry(props) {
@@ -199,7 +199,6 @@ function CategoryEntry(props) {
 		);
 	}
 }
-
 
 function NoteAddButton(props) {
 	function callAddNote() {
