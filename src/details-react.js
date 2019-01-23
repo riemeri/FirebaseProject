@@ -9,7 +9,6 @@ let categoryKey = null;
 let curNoteKey = null;
 let currentPath = null;
 let createDate;
-let notesBody = document.getElementById('notes-body');
 let categoryList = document.getElementById('category-list');
 let noteDisplay = document.getElementById('note-display');
 
@@ -52,6 +51,7 @@ logoutBtn.addEventListener('click', (ev) => {
 	});
 }, false);
 
+//Add a new category
 let addCategoryButton = document.getElementById('add-category-button');
 addCategoryButton.addEventListener('click', (ev) => {
     var dateObj = new Date();
@@ -80,7 +80,6 @@ function manualUpdate() {
 }
 
 function updateTable(snapshot) {
-	//notesBody.innerHTML = '';
 	snapshot.forEach(function (category){
 		if (categoryKey == null) {
 			categoryKey = category.key;
@@ -109,6 +108,51 @@ function updateTable(snapshot) {
 	ReactDOM.render(catList, categoryList);
 }
 
+class CategoryTitle extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {value: props.name, render: 0};
+
+		this.textChange = this.textChange.bind(this);
+		this.edit = this.edit.bind(this);
+		this.save = this.save.bind(this);
+	}
+
+	textChange(event) {
+		this.setState({value: event.target.value});
+	}
+
+	edit() {
+		this.setState({render: 1});
+	}
+	save() {
+		db.ref('/note-categories/' + uid + '/'+ categoryKey).update({title: this.state.value});
+		this.setState({render: 0});
+	}
+
+	render() {
+		if(this.state.render == 0) {
+			return (
+				<div id="cat-title-box">
+					<h4 style={{marginLeft: '14px'}}>{this.state.value}</h4>
+					<button onClick={this.edit} className="edit-cat mdl-button mdl-js-button mdl-button--icon">
+						<i className="material-icons">edit</i>
+					</button>
+				</div>
+			);
+		}
+		else {
+			return (
+				<form>
+					<input id="cat-title" type="text" value={this.state.value} onChange={this.textChange} className="mdl-textfield--input"/>
+					<button onClick={this.save} className="mdl-button mdl-js-button mdl-button--icon">
+						<i className="material-icons">save</i>
+					</button>
+				</form>
+			);
+		}
+	}
+}
 
 function CategoryEntry(props) {
 	function selectCategory() {
@@ -116,25 +160,7 @@ function CategoryEntry(props) {
 		updateCurrentPath();
 		manualUpdate();
 	}
-	function saveCategory() {
-		var name = document.getElementById('cat-title').value;
-		db.ref('/note-categories/' + currentPath).update({title: name});
-		manualUpdate();
-	}
-	function editCatName() {
-		var titleDiv = document.getElementById('cat-title-box');
-		const elm = (
-			<form>
-				<input id="cat-title" type="text" value={props.name} className="mdl-textfield--input"/>
-				<button onClick={saveCategory} className="mdl-button mdl-js-button mdl-button--icon">
-					<i className="material-icons">save</i>
-				</button>
-			</form>
-		);
-		ReactDOM.render(elm, titleDiv);
-	}
-    //var dateObj = new Date(date);
-    //var dateText = '' + (dateObj.getMonth()+1) + '/' + dateObj.getDate() + '/' + dateObj.getFullYear();
+
 	var notesArray = [];
 	if (props.notes != null) {
 		notesArray = Object.values(props.notes);
@@ -159,12 +185,7 @@ function CategoryEntry(props) {
 	if (props.cKey == categoryKey) {
 		return (
 			<div onClick={selectCategory} className="cat-card mdl-card mdl-shadow--2dp" key={props.cKey}>
-				<div id="cat-title-box">
-					<h4 style={{marginLeft: '14px'}}>{props.name}</h4>
-					<button onClick={editCatName} className="edit-cat mdl-button mdl-js-button mdl-button--icon">
-						<i className="material-icons">edit</i>
-					</button>
-				</div>
+				<CategoryTitle name={props.name}/>
 				<ul>{noteList}</ul>
 				<NoteAddButton cKey={props.cKey}/>
 			</div>

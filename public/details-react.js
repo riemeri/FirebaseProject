@@ -1,3 +1,10 @@
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var user = firebase.auth().currentUser;
 var name, email, photoUrl, uid, emailVerified;
@@ -9,7 +16,6 @@ var categoryKey = null;
 var curNoteKey = null;
 var currentPath = null;
 var createDate = void 0;
-var notesBody = document.getElementById('notes-body');
 var categoryList = document.getElementById('category-list');
 var noteDisplay = document.getElementById('note-display');
 
@@ -51,6 +57,7 @@ logoutBtn.addEventListener('click', function (ev) {
 	});
 }, false);
 
+//Add a new category
 var addCategoryButton = document.getElementById('add-category-button');
 addCategoryButton.addEventListener('click', function (ev) {
 	var dateObj = new Date();
@@ -79,7 +86,6 @@ function manualUpdate() {
 }
 
 function updateTable(snapshot) {
-	//notesBody.innerHTML = '';
 	snapshot.forEach(function (category) {
 		if (categoryKey == null) {
 			categoryKey = category.key;
@@ -108,37 +114,89 @@ function updateTable(snapshot) {
 	ReactDOM.render(catList, categoryList);
 }
 
+var CategoryTitle = function (_React$Component) {
+	_inherits(CategoryTitle, _React$Component);
+
+	function CategoryTitle(props) {
+		_classCallCheck(this, CategoryTitle);
+
+		var _this = _possibleConstructorReturn(this, (CategoryTitle.__proto__ || Object.getPrototypeOf(CategoryTitle)).call(this, props));
+
+		_this.state = { value: props.name, render: 0 };
+
+		_this.textChange = _this.textChange.bind(_this);
+		_this.edit = _this.edit.bind(_this);
+		_this.save = _this.save.bind(_this);
+		return _this;
+	}
+
+	_createClass(CategoryTitle, [{
+		key: 'textChange',
+		value: function textChange(event) {
+			this.setState({ value: event.target.value });
+		}
+	}, {
+		key: 'edit',
+		value: function edit() {
+			this.setState({ render: 1 });
+		}
+	}, {
+		key: 'save',
+		value: function save() {
+			db.ref('/note-categories/' + uid + '/' + categoryKey).update({ title: this.state.value });
+			this.setState({ render: 0 });
+		}
+	}, {
+		key: 'render',
+		value: function render() {
+			if (this.state.render == 0) {
+				return React.createElement(
+					'div',
+					{ id: 'cat-title-box' },
+					React.createElement(
+						'h4',
+						{ style: { marginLeft: '14px' } },
+						this.state.value
+					),
+					React.createElement(
+						'button',
+						{ onClick: this.edit, className: 'edit-cat mdl-button mdl-js-button mdl-button--icon' },
+						React.createElement(
+							'i',
+							{ className: 'material-icons' },
+							'edit'
+						)
+					)
+				);
+			} else {
+				return React.createElement(
+					'form',
+					null,
+					React.createElement('input', { id: 'cat-title', type: 'text', value: this.state.value, onChange: this.textChange, className: 'mdl-textfield--input' }),
+					React.createElement(
+						'button',
+						{ onClick: this.save, className: 'mdl-button mdl-js-button mdl-button--icon' },
+						React.createElement(
+							'i',
+							{ className: 'material-icons' },
+							'save'
+						)
+					)
+				);
+			}
+		}
+	}]);
+
+	return CategoryTitle;
+}(React.Component);
+
 function CategoryEntry(props) {
 	function selectCategory() {
 		categoryKey = props.cKey;
 		updateCurrentPath();
 		manualUpdate();
 	}
-	function saveCategory() {
-		var name = document.getElementById('cat-title').value;
-		db.ref('/note-categories/' + currentPath).update({ title: name });
-		manualUpdate();
-	}
-	function editCatName() {
-		var titleDiv = document.getElementById('cat-title-box');
-		var elm = React.createElement(
-			'form',
-			null,
-			React.createElement('input', { id: 'cat-title', type: 'text', value: props.name, className: 'mdl-textfield--input' }),
-			React.createElement(
-				'button',
-				{ onClick: saveCategory, className: 'mdl-button mdl-js-button mdl-button--icon' },
-				React.createElement(
-					'i',
-					{ className: 'material-icons' },
-					'save'
-				)
-			)
-		);
-		ReactDOM.render(elm, titleDiv);
-	}
-	//var dateObj = new Date(date);
-	//var dateText = '' + (dateObj.getMonth()+1) + '/' + dateObj.getDate() + '/' + dateObj.getFullYear();
+
 	var notesArray = [];
 	if (props.notes != null) {
 		notesArray = Object.values(props.notes);
@@ -169,24 +227,7 @@ function CategoryEntry(props) {
 		return React.createElement(
 			'div',
 			{ onClick: selectCategory, className: 'cat-card mdl-card mdl-shadow--2dp', key: props.cKey },
-			React.createElement(
-				'div',
-				{ id: 'cat-title-box' },
-				React.createElement(
-					'h4',
-					{ style: { marginLeft: '14px' } },
-					props.name
-				),
-				React.createElement(
-					'button',
-					{ onClick: editCatName, className: 'edit-cat mdl-button mdl-js-button mdl-button--icon' },
-					React.createElement(
-						'i',
-						{ className: 'material-icons' },
-						'edit'
-					)
-				)
-			),
+			React.createElement(CategoryTitle, { name: props.name }),
 			React.createElement(
 				'ul',
 				null,
