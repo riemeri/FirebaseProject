@@ -5,10 +5,16 @@ var db = firebase.database();
 var storageRef = firebase.storage().ref();
 var imgElements = [];
 
-let currentKey = null;
+let categoryKey = null;
+let curNoteKey = null;
+let currentPath = null;
 let createDate;
-let notesBody = document.getElementById('notes-body');
+let categoryList = document.getElementById('category-list');
 let noteDisplay = document.getElementById('note-display');
+
+function updateCurrentPath() {
+	currentPath = uid +'/'+ categoryKey +'/notes/'+ curNoteKey;
+}
 
 //On change of auth state, get user info or return home if no one is logged in
 firebase.auth().onAuthStateChanged(function(user) {
@@ -45,67 +51,186 @@ logoutBtn.addEventListener('click', (ev) => {
 	});
 }, false);
 
-let addButton = document.getElementById('add-button');
-addButton.addEventListener('click', (ev) => {
+//Add a new category
+let addCategoryButton = document.getElementById('add-category-button');
+addCategoryButton.addEventListener('click', (ev) => {
     var dateObj = new Date();
 
-	currentKey = db.ref().child('notes/'+ uid).push({
-		title: 'New note',
-		content: '',
+	categoryKey = db.ref().child('note-categories/'+ uid).push({
+		title: 'New Category',
 		created: dateObj.toJSON(),
 		updated: dateObj.toJSON()
 	}).key;
 	
-	manualUpdate();
-	//showNote(currentKey);
+	addNote();
 });
 
 function checkTable(id) {
-	var notesRef = db.ref('/notes/' + id);
+	var notesRef = db.ref('/note-categories/' + id);
 	notesRef.on('value', (snapshot) => {
 		updateTable(snapshot);
 		//alert('table updated');
 	});
 }
 
-function updateTable(snapshot) {
-	notesBody.innerHTML = '';
-	var fst = 0;
-	snapshot.forEach(function (notes){
-		if (currentKey == null && fst == 0) {
-			currentKey = notes.key;
-			fst = 1;
-		}
-		addTableEntry(notes.val().title, notes.key, notes.val().created);
-	});
-	showNote(currentKey);
-}
-
 function manualUpdate() {
-	db.ref('/notes/' + uid).once('value', (snapshot) => {
+	db.ref('/note-categories/' + uid).once('value', (snapshot) => {
 		updateTable(snapshot);
 	});
 }
 
-function addTableEntry(title, key, date) {
-	var rows = notesBody.rows.length;
-	row = notesBody.insertRow(rows);
-	var cell1 = row.insertCell(0);
-	var cell2 = row.insertCell(1);
-
-	cell1.className = "mdl-data-table__cell--non-numeric";
-	cell1.innerHTML = title;
-	row.addEventListener('click', (ev) => {
-		showNote(key);
+function updateTable(snapshot) {
+	snapshot.forEach(function (category){
+		if (categoryKey == null) {
+			categoryKey = category.key;
+		}
+		if (curNoteKey == null) {
+			category.child('notes').forEach(function(note) {
+				curNoteKey = note.key;
+				updateCurrentPath();
+				showNote(curNoteKey);
+				return true;
+			});
+		}
+		return true;
 	});
 
-    var dateObj = new Date(date);
-    var dateText = '' + (dateObj.getMonth()+1) + '/' + dateObj.getDate() + '/' + dateObj.getFullYear();
-    cell2.innerHTML = dateText;
+	var catKeys = Object.keys(snapshot.exportVal());
+	var catArray = Object.values(snapshot.exportVal());
+	var i = 0;
+	const catList = catArray.map((category) => {
+		const cKey = catKeys[i];
+		//console.log(category);
+		i++;
+		return <CategoryEntry name={category.title} cKey={cKey} notes={category.notes}/>;
+	});
+
+	ReactDOM.render(catList, categoryList);
 }
 
+class CategoryTitle extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {value: props.name, render: 0};
+
+		this.textChange = this.textChange.bind(this);
+		this.edit = this.edit.bind(this);
+		this.save = this.save.bind(this);
+	}
+
+	textChange(event) {
+		this.setState({value: event.target.value});
+	}
+
+	edit() {
+		this.setState({render: 1});
+	}
+	save() {
+		db.ref('/note-categories/' + uid + '/'+ categoryKey).update({title: this.state.value});
+		this.setState({render: 0});
+	}
+
+	render() {
+		if(this.state.render == 0) {
+			return (
+				<div id="cat-title-box">
+					<h4 style={{marginLeft: '14px'}}>{this.state.value}</h4>
+					<button onClick={this.edit} className="edit-cat mdl-button mdl-js-button mdl-button--icon">
+						<i className="material-icons">edit</i>
+					</button>
+				</div>
+			);
+		}
+		else {
+			return (
+				<form>
+					<input id="cat-title" type="text" value={this.state.value} onChange={this.textChange} className="mdl-textfield--input"/>
+					<button onClick={this.save} className="mdl-button mdl-js-button mdl-button--icon">
+						<i className="material-icons">save</i>
+					</button>
+				</form>
+			);
+		}
+	}
+}
+
+function CategoryEntry(props) {
+	function selectCategory() {
+		categoryKey = props.cKey;
+		updateCurrentPath();
+		manualUpdate();
+	}
+
+	var notesArray = [];
+	if (props.notes != null) {
+		notesArray = Object.values(props.notes);
+		var noteKeys = Object.keys(props.notes);
+	}
+	var i = 0;
+	const noteList = notesArray.map((note) => {
+		const nKey = noteKeys[i];
+		function doShowNote() {
+			curNoteKey = nKey;
+			categoryKey = props.cKey;
+			updateCurrentPath();
+			showNote(nKey);
+		}
+		i = i + 1;
+		return (
+			<li key={note.created}>
+				<a href="#" onClick={doShowNote}>{note.title}</a>
+			</li> )
+	});
+
+	if (props.cKey == categoryKey) {
+		return (
+			<div onClick={selectCategory} className="cat-card mdl-card mdl-shadow--2dp" key={props.cKey}>
+				<CategoryTitle name={props.name}/>
+				<ul>{noteList}</ul>
+				<NoteAddButton cKey={props.cKey}/>
+			</div>
+		);
+	}
+	else {
+		return (
+			<div onClick={selectCategory} className="cat-card mdl-card mdl-shadow--2dp" key={props.cKey}>
+				<h5 style={{marginLeft: '14px'}}>{props.name}</h5>
+			</div>
+		);
+	}
+}
+
+
+function NoteAddButton(props) {
+	function callAddNote() {
+		addNote(props.cKey);
+	}
+
+	return (
+		<button onClick={callAddNote} className="add-note-button mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab mdl-js-ripple-effect mdl-button--colored mdl-shadow--4dp">
+			<i className="material-icons">add</i>
+		</button>
+	)
+}
+
+function addNote(catKey) {
+	var dateObj = new Date();
+
+	curNoteKey = db.ref().child('note-categories/'+ uid + '/' + catKey + '/notes').push({
+		title: 'New note',
+		content: '',
+		created: dateObj.toJSON(),
+		updated: dateObj.toJSON()
+	}).key;
+	
+	updateCurrentPath();
+	manualUpdate();
+	showNote(curNoteKey);
+}
+
+
 function showNote(noteKey) {
-	db.ref('notes/' + uid + '/' + noteKey).once('value').then(function(snapshot) {
+	db.ref('note-categories/' + uid +'/'+ categoryKey + '/notes/' + noteKey).once('value').then(function(snapshot) {
         const noteElement = (
             <form key={snapshot.key}>
                 <div className="edit-note-title mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
@@ -125,17 +250,20 @@ function showNote(noteKey) {
 		
 		showNoteFiles(noteKey);
 
-        currentKey = snapshot.key;
-        createDate = snapshot.val().created;
+        noteKey = snapshot.key;
+		updateCurrentPath();
+		createDate = snapshot.val().created;
+	}).catch(function(error) {
+		console.log(error.message);
 	});
 }
 
 function showNoteFiles(noteKey) {
-	var filesRef = storageRef.child('/files/' + uid + '/' + noteKey);
+	var filesRef = storageRef.child('/files/' + currentPath);
 	var fileDisplay = document.getElementById('file-display');
 	ReactDOM.render(<div></div>, fileDisplay);
 
-	var notesMeta = db.ref('notes/' + uid + '/' + noteKey + '/files').once('value')
+	var notesMeta = db.ref('note-categories/' + currentPath + '/files').once('value')
 		.then(function(snapshot) {
 			if (snapshot.hasChildren()) {
 				var fileArray = Object.values(snapshot.exportVal());
@@ -163,16 +291,16 @@ function createImageList(fileArray, filesRef, fileDisplay) {
 
 function FileHolder(props) {
 	function deleteClicked() { 
-		var path = '/files/' + uid + '/' + currentKey + '/' + props.name;
+		var path = '/files/' + currentPath + '/' + props.name;
 		deleteFile(path);
-		db.ref('/notes/' + uid + '/' + currentKey + '/files/' + props.name.slice(0,-4)).remove()
+		db.ref('/note-categories/' + currentPath + '/files/' + props.name.slice(0,-4)).remove()
 			.then(function() {
 				//snackbarToast("Entry removed.");
 			}).catch(function(error) {
 				snackbarToast("Failed to remove DB entry.");
 				console.log(error.message);
 			});
-		showNote(currentKey);
+		showNote(curNoteKey);
 	}
 	if (props.tag == '.jpg' || props.tag == '.png') {
 		return 	(
@@ -207,7 +335,7 @@ saveButton.addEventListener('click', (ev) => {
         created: createDate,
 		updated: dateObj.toJSON()
 	};
-	db.ref('/notes/' + uid + '/' + currentKey).once('value')
+	db.ref('/note-categories/' + currentPath).once('value')
 		.then(function(snapshot) {
 			if (snapshot.hasChild('files')) {
 				noteData.files = snapshot.child('files').val();
@@ -216,12 +344,11 @@ saveButton.addEventListener('click', (ev) => {
 				//snackbarToast("No files to update.");
 			}
 			var updates = {};
-			updates['/notes/' + uid + '/' + currentKey] = noteData;
+			updates['/note-categories/' + currentPath] = noteData;
 			db.ref().update(updates);
 			manualUpdate();
 			snackbarToast('"' + noteData.title + '" saved.');
 		});
-
 });
 
 function deleteFile(path) {
@@ -236,7 +363,7 @@ function deleteFile(path) {
 let deleteButton = document.getElementById('delete-button');
 deleteButton.addEventListener('click', (ev) => {
 	var title = document.getElementById('title-input').value;
-	var curNote = db.ref('/notes/' + uid + '/' + currentKey);
+	var curNote = db.ref('/note-categories/' + currentPath);
 	curNote.once('value')
 		.then(function(snapshot) {
 			if (snapshot.hasChild('files')) {
@@ -250,7 +377,9 @@ deleteButton.addEventListener('click', (ev) => {
 	curNote.remove()
         .then(function() {
 			snackbarToast('"' + title + '" deleted.');
-			currentKey = null;
+			categoryKey = null;
+			curNoteKey = null;
+			currentPath = null;
 			manualUpdate();
         })
         .catch(function(error) {
@@ -272,24 +401,23 @@ fileInput.addEventListener('change', (ev) => {
 
 
 function addFile(file) {
-	var uidKey = uid + '/' + currentKey
-	var fileRef = storageRef.child('files/' + uidKey + '/' + file.name);
+	var fileRef = storageRef.child('files/' + currentPath + '/' + file.name);
 	snackbarToast("Uploading: " + file.name);
 	fileRef.put(file)
 		.then(function(snapshot) {
 			snackbarToast('Successfully uploaded "' + file.name + '"')
-			showNoteFiles(currentKey);
+			showNoteFiles(curNoteKey);
 		}).catch(function(error) {
 			snackbarToast('Failed to upload "' + file.name + '"')
 			console.log(error.message);
 		});
 
-	var fileMeta = db.ref().child('notes/'+ uidKey + '/files/' + file.name.slice(0, -4)).set({
+	var fileMeta = db.ref().child('note-categories/'+ currentPath + '/files/' + file.name.slice(0, -4)).set({
 		name: file.name,
 		path: fileRef.fullPath,
 		type: file.type
 	});
-	showNote(currentKey);
+	showNote(curNoteKey);
 }
 
 function snackbarToast(toast) {
@@ -298,5 +426,3 @@ function snackbarToast(toast) {
 		message: toast
 	});
 }
-
-

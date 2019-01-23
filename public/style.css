@@ -25,9 +25,16 @@
 	display: block;
 }
 
+.cat-card {
+	max-width: -webkit-fill-available;
+	margin-bottom: 10px;
+	min-height: fit-content;
+	display: block;
+}
+
 .list-box {
 	border-radius: 2px;
-    padding: 8px calc(1% + 15px) 4px;
+    padding: 8px calc(1% + 8px) 4px;
     margin-bottom: 10px;
     margin-left: auto;
     margin-right: auto;
@@ -35,12 +42,19 @@
     overflow: visible;
 }
 
-#add-button {
+#add-category-button {
 	position: relative;
     bottom: 9px;
     margin: 0px;
     float: right;
     right: calc(-96% + 26px);
+}
+
+.add-note-button {
+	margin: 0px;
+    float: right;
+	right: calc(1% + 10px);
+	bottom: 8px;
 }
 
 #save-button {
@@ -65,6 +79,13 @@
 	right: 3px;
     bottom: 0px;
     float: right;
+}
+
+.edit-cat {
+	float: right;
+    top: -48px;
+    right: 6px;
+    position: relative;
 }
 
 #add-file-button {
