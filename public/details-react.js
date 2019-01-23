@@ -11,6 +11,7 @@ var curNoteKey = null;
 var currentPath = null;
 var createDate = void 0;
 var notesBody = document.getElementById('notes-body');
+var categoryList = document.getElementById('category-list');
 var noteDisplay = document.getElementById('note-display');
 
 function updateCurrentPath() {
@@ -74,8 +75,14 @@ function checkTable(id) {
 	});
 }
 
+function manualUpdate() {
+	db.ref('/note-categories/' + uid).once('value', function (snapshot) {
+		updateTable(snapshot);
+	});
+}
+
 function updateTable(snapshot) {
-	notesBody.innerHTML = '';
+	//notesBody.innerHTML = '';
 	snapshot.forEach(function (category) {
 		if (categoryKey == null) {
 			categoryKey = category.key;
@@ -88,42 +95,41 @@ function updateTable(snapshot) {
 				return true;
 			});
 		}
-		addTableEntry(category.val().title, category.key, category.exportVal().notes);
+		return true;
 	});
+
+	var catKeys = Object.keys(snapshot.exportVal());
+	var catArray = Object.values(snapshot.exportVal());
+	var i = 0;
+	var catList = catArray.map(function (category) {
+		var cKey = catKeys[i];
+		//console.log(category);
+		i++;
+		return React.createElement(CategoryEntry, { name: category.title, cKey: cKey, notes: category.notes });
+	});
+
+	ReactDOM.render(catList, categoryList);
 }
 
-function manualUpdate() {
-	db.ref('/note-categories/' + uid).once('value', function (snapshot) {
-		updateTable(snapshot);
-	});
-}
-
-function addTableEntry(title, key, notes) {
-
-	var rows = notesBody.rows.length;
-	row = notesBody.insertRow(rows);
-	var cell1 = row.insertCell(0);
-	var cell2 = row.insertCell(1);
-
-	cell1.className = "mdl-data-table__cell--non-numeric";
-	//cell1.innerHTML = title;
-	//row.addEventListener('click', (ev) => {
-	//	showNote(noteKey);
-	//});
-
+function CategoryEntry(props) {
+	function selectCategory() {
+		categoryKey = props.cKey;
+		updateCurrentPath();
+		manualUpdate();
+	}
 	//var dateObj = new Date(date);
 	//var dateText = '' + (dateObj.getMonth()+1) + '/' + dateObj.getDate() + '/' + dateObj.getFullYear();
-	//cell2.innerHTML = dateText;
-	var notesArray = Object.values(notes);
-	var noteKeys = Object.keys(notes);
-	console.log(notesArray);
-	console.log(noteKeys);
+	var notesArray = [];
+	if (props.notes != null) {
+		notesArray = Object.values(props.notes);
+		var noteKeys = Object.keys(props.notes);
+	}
 	var i = 0;
 	var noteList = notesArray.map(function (note) {
 		var nKey = noteKeys[i];
 		function doShowNote() {
 			curNoteKey = nKey;
-			categoryKey = key;
+			categoryKey = props.cKey;
 			updateCurrentPath();
 			showNote(nKey);
 		}
@@ -139,18 +145,43 @@ function addTableEntry(title, key, notes) {
 		);
 	});
 
-	ReactDOM.render(React.createElement(
-		'ul',
-		{ key: key },
-		noteList
-	), cell1);
-	ReactDOM.render(React.createElement(NoteAddButton, null), cell2);
+	if (props.cKey == categoryKey) {
+		return React.createElement(
+			'div',
+			{ onClick: selectCategory, className: 'cat-card mdl-card mdl-shadow--2dp', key: props.cKey },
+			React.createElement(
+				'h4',
+				{ style: { marginLeft: '14px' } },
+				props.name
+			),
+			React.createElement(
+				'ul',
+				null,
+				noteList
+			),
+			React.createElement(NoteAddButton, { cKey: props.cKey })
+		);
+	} else {
+		return React.createElement(
+			'div',
+			{ onClick: selectCategory, className: 'cat-card mdl-card mdl-shadow--2dp', key: props.cKey },
+			React.createElement(
+				'h5',
+				{ style: { marginLeft: '14px' } },
+				props.name
+			)
+		);
+	}
 }
 
-function NoteAddButton() {
+function NoteAddButton(props) {
+	function callAddNote() {
+		addNote(props.cKey);
+	}
+
 	return React.createElement(
 		'button',
-		{ onClick: addNote, className: 'mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored mdl-shadow--4dp' },
+		{ onClick: callAddNote, className: 'add-note-button mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab mdl-js-ripple-effect mdl-button--colored mdl-shadow--4dp' },
 		React.createElement(
 			'i',
 			{ className: 'material-icons' },
@@ -159,10 +190,10 @@ function NoteAddButton() {
 	);
 }
 
-function addNote() {
+function addNote(catKey) {
 	var dateObj = new Date();
 
-	curNoteKey = db.ref().child('note-categories/' + uid + '/' + categoryKey + '/notes').push({
+	curNoteKey = db.ref().child('note-categories/' + uid + '/' + catKey + '/notes').push({
 		title: 'New note',
 		content: '',
 		created: dateObj.toJSON(),

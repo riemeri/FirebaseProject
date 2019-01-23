@@ -11,6 +11,7 @@ let curNoteKey = null;
 let currentPath = null;
 let createDate;
 let notesBody = document.getElementById('notes-body');
+let categoryList = document.getElementById('category-list');
 let noteDisplay = document.getElementById('note-display');
 
 function updateCurrentPath() {
@@ -75,8 +76,14 @@ function checkTable(id) {
 	});
 }
 
+function manualUpdate() {
+	db.ref('/note-categories/' + uid).once('value', (snapshot) => {
+		updateTable(snapshot);
+	});
+}
+
 function updateTable(snapshot) {
-	notesBody.innerHTML = '';
+	//notesBody.innerHTML = '';
 	snapshot.forEach(function (category){
 		if (categoryKey == null) {
 			categoryKey = category.key;
@@ -89,42 +96,41 @@ function updateTable(snapshot) {
 				return true;
 			});
 		}
-		addTableEntry(category.val().title, category.key, category.exportVal().notes);
+		return true;
 	});
+
+	var catKeys = Object.keys(snapshot.exportVal());
+	var catArray = Object.values(snapshot.exportVal());
+	var i = 0;
+	const catList = catArray.map((category) => {
+		const cKey = catKeys[i];
+		//console.log(category);
+		i++;
+		return <CategoryEntry name={category.title} cKey={cKey} notes={category.notes}/>;
+	});
+
+	ReactDOM.render(catList, categoryList);
 }
 
-function manualUpdate() {
-	db.ref('/note-categories/' + uid).once('value', (snapshot) => {
-		updateTable(snapshot);
-	});
-}
-
-function addTableEntry(title, key, notes) {
-
-	var rows = notesBody.rows.length;
-	row = notesBody.insertRow(rows);
-	var cell1 = row.insertCell(0);
-	var cell2 = row.insertCell(1);
-
-	cell1.className = "mdl-data-table__cell--non-numeric";
-	//cell1.innerHTML = title;
-	//row.addEventListener('click', (ev) => {
-	//	showNote(noteKey);
-	//});
-
+function CategoryEntry(props) {
+	function selectCategory() {
+		categoryKey = props.cKey;
+		updateCurrentPath();
+		manualUpdate();
+	}
     //var dateObj = new Date(date);
     //var dateText = '' + (dateObj.getMonth()+1) + '/' + dateObj.getDate() + '/' + dateObj.getFullYear();
-	//cell2.innerHTML = dateText;
-	var notesArray =  Object.values(notes);
-	var noteKeys = Object.keys(notes);
-	console.log(notesArray);
-	console.log(noteKeys);
+	var notesArray = [];
+	if (props.notes != null) {
+		notesArray = Object.values(props.notes);
+		var noteKeys = Object.keys(props.notes);
+	}
 	var i = 0;
 	const noteList = notesArray.map((note) => {
 		const nKey = noteKeys[i];
 		function doShowNote() {
 			curNoteKey = nKey;
-			categoryKey = key;
+			categoryKey = props.cKey;
 			updateCurrentPath();
 			showNote(nKey);
 		}
@@ -133,26 +139,43 @@ function addTableEntry(title, key, notes) {
 			<li key={note.created}>
 				<a href="#" onClick={doShowNote}>{note.title}</a>
 			</li> )
+	});
+
+	if (props.cKey == categoryKey) {
+		return (
+			<div onClick={selectCategory} className="cat-card mdl-card mdl-shadow--2dp" key={props.cKey}>
+				<h4 style={{marginLeft: '14px'}}>{props.name}</h4>
+				<ul>{noteList}</ul>
+				<NoteAddButton cKey={props.cKey}/>
+			</div>
+		);
 	}
-	);
-
-	ReactDOM.render(<ul key={key}>{noteList}</ul> , cell1);
-	ReactDOM.render(<NoteAddButton/>, cell2);
-
+	else {
+		return (
+			<div onClick={selectCategory} className="cat-card mdl-card mdl-shadow--2dp" key={props.cKey}>
+				<h5 style={{marginLeft: '14px'}}>{props.name}</h5>
+			</div>
+		);
+	}
 }
 
-function NoteAddButton() {
+
+function NoteAddButton(props) {
+	function callAddNote() {
+		addNote(props.cKey);
+	}
+
 	return (
-		<button onClick={addNote} className="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored mdl-shadow--4dp">
+		<button onClick={callAddNote} className="add-note-button mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab mdl-js-ripple-effect mdl-button--colored mdl-shadow--4dp">
 			<i className="material-icons">add</i>
 		</button>
 	)
 }
 
-function addNote() {
+function addNote(catKey) {
 	var dateObj = new Date();
 
-	curNoteKey = db.ref().child('note-categories/'+ uid + '/' + categoryKey + '/notes').push({
+	curNoteKey = db.ref().child('note-categories/'+ uid + '/' + catKey + '/notes').push({
 		title: 'New note',
 		content: '',
 		created: dateObj.toJSON(),
